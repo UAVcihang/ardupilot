@@ -119,6 +119,9 @@ public:
     bool compass_cal_requires_reboot() { return _cal_complete_requires_reboot; }
     bool is_calibrating() const;
 
+    // add by weihli
+    bool accept_calibration_mask(uint8_t mask, bool force=false);
+
     /*
       handle an incoming MAG_CAL command
     */
@@ -301,7 +304,7 @@ private:
     void _detect_backends(void);
 
     // compass cal
-    bool _accept_calibration(uint8_t i);
+    bool _accept_calibration(uint8_t i, bool force = false);
     bool _accept_calibration_mask(uint8_t mask);
     void _cancel_calibration(uint8_t i);
     void _cancel_calibration_mask(uint8_t mask);

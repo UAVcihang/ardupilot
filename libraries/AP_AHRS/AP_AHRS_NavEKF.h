@@ -234,6 +234,9 @@ public:
 
     void setTakeoffExpected(bool val);
     void setTouchdownExpected(bool val);
+    // add by weihli
+    // …≤≥µ…Ë÷√
+    void setBrakeExpected(bool val);
 
     bool getGpsGlitchStatus();
 

@@ -374,6 +374,31 @@ private:
     // Auto
     AutoMode auto_mode;   // controls which auto controller is run
 
+    // add by weihli for zigzag mode
+    ZigzagMode zigzag_mode;
+    ZigzagRCState zigzag_rc_state;
+    bool          zigzag_auto_complete_state; // set to true if the copter arrived a/b position
+    struct {
+        bool a_hasbeen_defined;     //true if point A has been defined
+        bool b_hasbeen_defined;     //true if point B has been defined
+        //bool action;                // true if get the command to run to next point
+        //bool breakPoint_defined;   // breakpoint
+        ZigzagBPMode bp_mode;
+        int8_t direct;             // direction of ab point; 1: right, -1:left
+        uint16_t width;              // zigzag width cm
+        int16_t index;             //
+
+        uint16_t flag;             // 0b101
+        //uint32_t last_exit_time_ms; // last exit zigzag mode time
+
+        Location_Class a_pos;      // use absolute position
+        Location_Class b_pos;
+        Location_Class bp_pos;
+        Vector3f vA_pos;          // convert location to vector
+        Vector3f vB_pos;
+        Vector3f vBP_pos;
+    } zigzag_waypoint_state;
+
     // Guided
     GuidedMode guided_mode;  // controls which controller is run (pos or vel)
 
@@ -893,6 +918,22 @@ private:
     bool landing_with_GPS();
     bool loiter_init(bool ignore_checks);
     void loiter_run();
+
+    // add by weihli for zigzag mode
+    bool zigzag_init(bool ignore_checks);
+    void zigzag_run();
+    void zigzag_manual_control(void);
+    void zigzag_auto_control(void);
+    void zigzag_calculate_next_dest(/*Location_Class& next_dest*/Vector3f& next, uint16_t index);
+    void zigzag_set_destination(void);
+    void zigzag_set_bp_mode(ZigzagBPMode bp_mode);
+    void zigzag_stop(void);
+    void zigzag_auto_stop(void);
+    bool zigzag_record_point(bool aPoint);
+    void zigzag_clear_record(void);
+    void zigzag_save(void);
+    void zigzag_load(void);
+
 #if PRECISION_LANDING == ENABLED
     bool do_precision_loiter();
     void precision_loiter_xy();
@@ -993,6 +1034,9 @@ private:
     void update_land_detector();
     void update_throttle_thr_mix();
     void update_ground_effect_detector(void);
+    // add by weihli
+    // 刹车乱流更新
+    void update_turbulence_effect_detector(void);
     void landinggear_update();
     void update_notify();
     void motor_test_output();
@@ -1071,6 +1115,7 @@ private:
     void reset_control_switch();
     uint8_t read_3pos_switch(uint8_t chan);
     void read_aux_switches();
+    void read_multiaux_switches();
     void init_aux_switches();
     void init_aux_switch_function(int8_t ch_option, uint8_t ch_flag);
     void do_aux_switch_function(int8_t ch_function, uint8_t ch_flag);

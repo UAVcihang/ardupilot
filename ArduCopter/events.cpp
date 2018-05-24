@@ -55,7 +55,15 @@ void Copter::failsafe_battery_event(void)
             init_disarm_motors();
         } else {
             if (g.failsafe_battery_enabled == FS_BATT_RTL || control_mode == AUTO) {
-                set_mode_RTL_or_land_with_pause(MODE_REASON_BATTERY_FAILSAFE);
+            	// modified by weihli
+            	if(control_mode == ZIGZAG){
+            		set_mode_RTL_or_land_with_pause(MODE_REASON_BATTERY_FAILSAFE);
+            		zigzag_set_bp_mode(Zigzag_PowerNone);
+            	}
+            	else {
+            		set_mode_RTL_or_land_with_pause(MODE_REASON_BATTERY_FAILSAFE);
+            	}
+            	//set_mode_RTL_or_land_with_pause(MODE_REASON_BATTERY_FAILSAFE);
             } else {
                 set_mode_land_with_pause(MODE_REASON_BATTERY_FAILSAFE);
             }

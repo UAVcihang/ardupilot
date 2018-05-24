@@ -10,6 +10,9 @@
 #define ENABLE ENABLED
 #define DISABLE DISABLED
 
+// compass calibration success then reboot
+#define CAL_ALWAYS_REBOOT  1
+
 // Autopilot Yaw Mode enumeration
 enum autopilot_yaw_mode {
     AUTO_YAW_HOLD =             0,  // pilot controls the heading
@@ -72,6 +75,7 @@ enum aux_sw_func {
     AUXSW_PRECISION_LOITER =    39,  // enable precision loiter
     AUXSW_AVOID_PROXIMITY =     40,  // enable object avoidance using proximity sensors (ie. horizontal lidar)
     AUXSW_ARMDISARM =           41,  // arm or disarm vehicle
+    AUXSW_ZIGZAG_POS_RECORD =   42,  // record zigzag a/b point
     AUXSW_SWITCH_MAX,
 };
 
@@ -104,6 +108,7 @@ enum control_mode_t {
     THROW =        18,  // throw to launch mode using inertial/GPS system, no pilot input
     AVOID_ADSB =   19,  // automatic avoidance of obstacles in the macro scale - e.g. full-sized aircraft
     GUIDED_NOGPS = 20,  // guided mode but only accepts attitude and altitude
+    ZIGZAG =       21,  // zigzag mode
 };
 
 enum mode_reason_t {
@@ -200,6 +205,28 @@ enum AutoMode {
     Auto_NavGuided,
     Auto_Loiter,
     Auto_NavPayloadPlace,
+};
+
+// add by weihli for zigzag mode
+enum ZigzagMode {
+	Zigzag_Manual,
+	//Zigzag_SetDirect,
+	Zigzag_Auto,
+};
+
+enum ZigzagRCState {
+	RC_MID,
+	RC_RIGHT,
+	RC_LEFT
+};
+
+// breakpoint position mode
+enum ZigzagBPMode {
+	Zigzag_None = 0,
+	Zigzag_PowerNone,
+	Zigzag_DrugNone,
+	Zigzag_ModeSwitch,
+	Zigzag_PilotOverride,
 };
 
 // Guided modes

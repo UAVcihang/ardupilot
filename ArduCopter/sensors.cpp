@@ -189,6 +189,13 @@ void Copter::read_receiver_rssi(void)
 void Copter::compass_cal_update()
 {
     static uint32_t compass_cal_stick_gesture_begin = 0;
+    static float x,y,z;
+
+	// 如果无罗盘 则不进入校准
+    if (compass.get_count() == 0) {
+        // no compass available
+        return;
+    }
 
     if (!hal.util->get_soft_armed()) {
         compass.compass_cal_update();
@@ -197,6 +204,32 @@ void Copter::compass_cal_update()
     if (compass.is_calibrating()) {
         if (channel_yaw->get_control_in() < -4000 && channel_throttle->get_control_in() > 900) {
             compass.cancel_calibration_all();
+        }
+        /* notify LED */
+        if(AP_Notify::flags.compass_cal_status == 1)
+        {
+         z += ahrs.get_gyro().z * 0.01; // 100hz->0.01
+         if(fabsf(z) > 6.2832) //4pi 12.566 2pi 6.2832  3pi 9.424
+         	AP_Notify::flags.compass_cal_status = 2;
+        }
+        else if(AP_Notify::flags.compass_cal_status == 2)
+        {
+         	y += ahrs.get_gyro().y * 0.01;
+         	if(fabsf(y) > 6.2832)
+         		AP_Notify::flags.compass_cal_status = 3;
+        }
+        else if(AP_Notify::flags.compass_cal_status == 3)
+        {
+         	x += ahrs.get_gyro().x * 0.01;
+         	if(fabsf(x) > 6.2832)
+         	{
+         	    AP_Notify::flags.compass_cal_status = 0;
+         	    //
+         	    if(!compass.accept_calibration_mask(0xff, true))
+         	    {
+         	    	AP_Notify::flags.compass_cal_status = 4;
+         	    }
+         	}
         }
     } else {
         bool stick_gesture_detected = compass_cal_stick_gesture_begin != 0 && !motors->armed() && channel_yaw->get_control_in() > 4000 && channel_throttle->get_control_in() > 900;
@@ -210,6 +243,8 @@ void Copter::compass_cal_update()
 #else
             compass.start_calibration_all(true,true,COMPASS_CAL_STICK_DELAY,false);
 #endif
+            x = y = z = 0;
+            AP_Notify::flags.compass_cal_status = 1;
         }
     }
 }
@@ -364,7 +399,7 @@ void Copter::update_sensor_status_flags(void)
     // default to all healthy
     control_sensors_health = control_sensors_present;
 
-    if (!barometer.all_healthy()) {
+    if (!barometer.healthy()) {//if (!barometer.all_healthy()) { comment by weihli
         control_sensors_health &= ~MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE;
     }
     if (!g.compass_enabled || !compass.healthy() || !ahrs.use_compass()) {

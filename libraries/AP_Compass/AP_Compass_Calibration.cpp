@@ -129,14 +129,30 @@ Compass::cancel_calibration_all()
 }
 
 bool
-Compass::_accept_calibration(uint8_t i)
+Compass::accept_calibration_mask(uint8_t mask, bool force)
+{
+    bool success = true;
+    for (uint8_t i=0; i<COMPASS_MAX_INSTANCES; i++) {
+        if ((1<<i) & mask) {
+            if (!_accept_calibration(i, force)) {
+                success = false;
+            }
+            _calibrator[i].clear();
+        }
+    }
+
+    return success;
+}
+
+bool
+Compass::_accept_calibration(uint8_t i, bool force)
 {
     CompassCalibrator& cal = _calibrator[i];
     uint8_t cal_status = cal.get_status();
 
     if (_cal_saved[i] || cal_status == COMPASS_CAL_NOT_STARTED) {
         return true;
-    } else if (cal_status == COMPASS_CAL_SUCCESS) {
+    } else if (cal_status == COMPASS_CAL_SUCCESS || force?(cal_status != COMPASS_CAL_FAILED):(cal_status == COMPASS_CAL_SUCCESS)) {
         _cal_complete_requires_reboot = true;
         _cal_saved[i] = true;
 

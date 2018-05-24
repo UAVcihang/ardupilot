@@ -11,7 +11,81 @@ struct {
     uint8_t CH10_flag   : 2; // 8, 9    // ch10 aux switch : 0 is low or false, 1 is center or true, 2 is high
     uint8_t CH11_flag   : 2; // 10,11   // ch11 aux switch : 0 is low or false, 1 is center or true, 2 is high
     uint8_t CH12_flag   : 2; // 12,13   // ch12 aux switch : 0 is low or false, 1 is center or true, 2 is high
+    uint8_t CH7_multi_flag : 3; // 14, 15, 16 // ch7 multi aux switch : 0 is low or false, 1 is pump on, 2 is pump off, 3 is rtl on, 4 is rtl off, 5 is record B point, 6 is record B point
 } aux_con;
+
+/* add by weihli
+ * Radio signal(8 channels) overrided by gcs
+ * Channel 7  status:
+ * 						Initial     :   1000
+ * 						Pump on/off :   1200/1300
+ * 						RTL  on/off :   1500/1600
+ * 						A point     :   1800
+ * 						B point     :   2000
+ *
+*/
+void Copter::read_multiaux_switches()
+{
+	uint32_t tnow_ms = millis();
+
+	// calculate position of aux switch
+	int8_t switch_position;
+	uint16_t rc7_in = RC_Channels::rc_channel(CH_7)->get_radio_in();
+    if      (rc7_in < 1131) switch_position = 0; // Initial, no input
+    else if (rc7_in < 1261) switch_position = 1; // Pump on
+    else if (rc7_in < 1391) switch_position = 2; // Pump off
+    else if (rc7_in < 1531) switch_position = 3; // RTL on
+    else if (rc7_in < 1661) switch_position = 4; // RTL off
+    else if (rc7_in < 1851) switch_position = 5; // Record A point
+    else switch_position = 6;
+
+    // store time that switch last moved
+    if (aux_con.CH7_multi_flag != switch_position) {
+    	switch(switch_position) {
+    	case 0:
+    		break;
+    	case 1:
+    		break;
+    	case 2:
+    		break;
+    	case 3:
+    		set_mode(RTL, MODE_REASON_TX_COMMAND);
+    		break;
+    	case 4:
+            // return to loiter mode if we are currently in RTL
+            if (control_mode == RTL) {
+                //reset_control_switch();
+            	control_switch_state.last_switch_position = control_switch_state.debounced_switch_position = -1;
+            	set_mode(LOITER, MODE_REASON_TX_COMMAND);
+            }
+    		break;
+    	case 5:
+        	// record A position
+        	if(control_mode != LOITER && control_mode != POSHOLD) {
+        		return;
+        	}
+        	if(zigzag_record_point(true)) {
+        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A success");
+        		AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
+        	}
+
+    		break;
+    	case 6:
+        	// record B position
+        	if(control_mode != LOITER && control_mode != POSHOLD) {
+        		return;
+        	}
+        	if(zigzag_record_point(false)) {
+        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B success");
+        		AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
+        	}
+    		break;
+
+    	}
+    	aux_con.CH7_multi_flag = switch_position;
+        // control_switch_state.last_edge_time_ms = tnow_ms;
+    }
+}
 
 void Copter::read_control_switch()
 {
@@ -136,11 +210,17 @@ void Copter::read_aux_switches()
         return;
     }
 
+    /* Add by weihli
+     * Test new rc radio */
+#if 0
+    read_multiaux_switches();
+#else
     read_aux_switch(CH_7, aux_con.CH7_flag, g.ch7_option);
     read_aux_switch(CH_8, aux_con.CH8_flag, g.ch8_option);
     read_aux_switch(CH_9, aux_con.CH9_flag, g.ch9_option);
     read_aux_switch(CH_10, aux_con.CH10_flag, g.ch10_option);
     read_aux_switch(CH_11, aux_con.CH11_flag, g.ch11_option);
+#endif
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     read_aux_switch(CH_12, aux_con.CH12_flag, g.ch12_option);
@@ -594,6 +674,35 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 break;
             }
             break;
+
+            // add by weihli
+            case AUXSW_ZIGZAG_POS_RECORD:
+                // record A position or B position
+                switch (ch_flag) {
+                case AUX_SWITCH_HIGH:
+                	// record A position
+                	if(control_mode != LOITER && control_mode != POSHOLD) {
+                		return;
+                	}
+                	if(zigzag_record_point(true)) {
+                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A success");
+                		AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
+                	}
+                    //init_arm_motors(false);
+                    break;
+                case AUX_SWITCH_LOW:
+                	// record B position
+                	if(control_mode != LOITER && control_mode != POSHOLD) {
+                		return;
+                	}
+                	if(zigzag_record_point(false)) {
+                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B success");
+                		AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
+                	}
+                    //init_disarm_motors();
+                    break;
+                }
+                break;
     }
 }
 

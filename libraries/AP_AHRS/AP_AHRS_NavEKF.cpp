@@ -1544,6 +1544,25 @@ void AP_AHRS_NavEKF::setTouchdownExpected(bool val)
     }
 }
 
+void AP_AHRS_NavEKF::setBrakeExpected(bool val)
+{
+    switch (ekf_type()) {
+        case EKF_TYPE2:
+        default:
+            EKF2.setBrakeExpected(val);
+            break;
+
+        case EKF_TYPE3:
+            //EKF3.setTouchdownExpected(val);
+            break;
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_SITL
+        case EKF_TYPE_SITL:
+            break;
+#endif
+    }
+}
+
 bool AP_AHRS_NavEKF::getGpsGlitchStatus()
 {
     nav_filter_status ekf_status {};

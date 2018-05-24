@@ -99,7 +99,7 @@ bool AP_Arming_Copter::barometer_checks(bool display_failure)
     // check Baro
     if ((checks_to_perform == ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_BARO)) {
         // barometer health check
-        if (!barometer.all_healthy()) {
+        if(!barometer.healthy()){ //if (!barometer.all_healthy()) { comment by weihli
             if (display_failure) {
                 gcs_send_text(MAV_SEVERITY_CRITICAL,"PreArm: Barometer not healthy");
             }
@@ -704,7 +704,7 @@ bool AP_Arming_Copter::arm_checks(bool display_failure, bool arming_from_gcs)
     // baro checks
     if ((checks_to_perform == ARMING_CHECK_ALL) || (checks_to_perform & ARMING_CHECK_BARO)) {
         // baro health check
-        if (!barometer.all_healthy()) {
+    	if (!barometer.healthy()) {//if (!barometer.all_healthy()) { comment by weihli
             if (display_failure) {
                 gcs_send_text(MAV_SEVERITY_CRITICAL,"Arm: Barometer not healthy");
             }

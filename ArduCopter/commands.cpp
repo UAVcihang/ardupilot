@@ -110,6 +110,20 @@ bool Copter::set_home(const Location& loc)
         }
     }
 
+    // add by weihli
+    // 每次解锁都会重新设置一次home点，并根据时间来加载或清除ab点
+    uint64_t gps_timestamp = gps.time_epoch_usec();
+    int32_t cur_timestamp_min = gps_timestamp / 6.0e7f;
+    if(cur_timestamp_min - g.Zigzag_time > 10) {
+    	// clear AB/Break Point
+    	zigzag_clear_record();
+    }
+    else
+    {
+    	zigzag_load();
+    	//zigzag_waypoint_state.bp_mode =
+    }
+
     // log ahrs home and ekf origin dataflash
     Log_Write_Home_And_Origin();
 

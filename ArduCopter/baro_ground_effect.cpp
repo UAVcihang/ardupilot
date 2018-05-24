@@ -67,3 +67,8 @@ void Copter::update_ground_effect_detector(void)
     ahrs.setTakeoffExpected(gndeffect_state.takeoff_expected);
     ahrs.setTouchdownExpected(gndeffect_state.touchdown_expected);
 }
+
+void Copter::update_turbulence_effect_detector(void)
+{
+	ahrs.setBrakeExpected(true);
+}

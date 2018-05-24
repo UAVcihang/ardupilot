@@ -196,6 +196,17 @@ void NavEKF2_core::InitialiseVariables()
     validOrigin = false;
     takeoffExpectedSet_ms = 0;
     expectGndEffectTakeoff = false;
+
+    // add by weihli
+    brakeExpectedSet_ms = 0;
+    expectTurbulenceBrake = false;
+
+    // Æ½·Éµô¸ß
+    hgtMeaStart = 0.0f;
+    gpsHeightStart = 0.0f;
+    finishMoveTime_ms = 0;
+    hoverHorizontal = true;
+
     touchdownExpectedSet_ms = 0;
     expectGndEffectTouchdown = false;
     gpsSpdAccuracy = 0.0f;

@@ -313,6 +313,12 @@ public:
         k_param_flight_mode6,
         k_param_simple_modes,
 
+
+        // add by weihli
+        // 208: AB point record time
+        k_param_Zigzag_time = 208,
+        k_param_Zigzag_width = 209,
+
         //
         // 210: Waypoint data
         //
@@ -484,6 +490,9 @@ public:
     AP_Float                autotune_aggressiveness;
     AP_Float                autotune_min_d;
 
+    AP_Int32                Zigzag_time;
+    AP_Int8                 Zigzag_width;
+
     // Note: keep initializers here in the same order as they are declared
     // above.
     Parameters() :
@@ -569,6 +578,20 @@ public:
     
     // control over servo output ranges
     SRV_Channels servo_channels;
+
+    // add by weihli
+    AP_Int32  aPos_lat;
+    AP_Int32  aPos_lng;
+    AP_Int32  aPos_alt;
+    AP_Int32  bPos_lat;
+    AP_Int32  bPos_lng;
+    AP_Int32  bPos_alt;
+    AP_Int32  bpPos_lat;
+    AP_Int32  bpPos_lng;
+    AP_Int32  bpPos_alt;
+    AP_Int16  ab_index;
+    AP_Int8   ab_dirct;
+    AP_Int8   ab_bpMode;
 };
 
 extern const AP_Param::Info        var_info[];

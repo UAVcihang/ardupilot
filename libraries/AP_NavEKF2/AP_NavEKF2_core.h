@@ -221,6 +221,9 @@ public:
     // causes the EKF to compensate for expected barometer errors due to ground effect
     void setTouchdownExpected(bool val);
 
+    // 设置刹车参数
+    void setBrakeExpected(bool val);
+
     // Set to true if the terrain underneath is stable enough to be used as a height reference
     // in combination with a range finder. Set to false if the terrain underneath the vehicle
     // cannot be used as a height reference
@@ -658,6 +661,11 @@ private:
     // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect
     bool getTakeoffExpected();
 
+    // add by weihli
+    // 判断时否正刹车
+    bool getBrakeExpected();
+
+
     // determine if a touchdown is expected so that we can compensate for expected barometer errors due to ground effect
     bool getTouchdownExpected();
 
@@ -1040,6 +1048,17 @@ private:
     bool expectGndEffectTouchdown;    // external state from ArduCopter - touchdown expected
     uint32_t touchdownExpectedSet_ms; // system time at which expectGndEffectTouchdown was set
     float meaHgtAtTakeOff;            // height measured at commencement of takeoff
+
+    // add by weihli
+    //刹车气流乱流效应 刹车掉高
+    bool expectTurbulenceBrake;
+    uint32_t brakeExpectedSet_ms;
+
+    // 平飞掉高参数
+    float hgtMeaStart;
+    float gpsHeightStart;
+    uint32_t finishMoveTime_ms;
+    bool hoverHorizontal;
 
     // control of post takeoff magentic field and heading resets
     bool finalInflightYawInit;      // true when the final post takeoff initialisation of yaw angle has been performed

@@ -733,6 +733,211 @@ int32_t AC_WPNav::get_wp_bearing_to_destination() const
     return get_bearing_cd(_inav.get_position(), _destination);
 }
 
+/* Add by weihli */
+/// update_zigzag_wpnav - run the zigzag mode wp controller - throttle can be controlled
+bool AC_WPNav::update_zigzag_wpnav()
+{
+    // calculate dt
+    float dt = _pos_control.time_since_last_xy_update();
+    bool ret = true;
+
+    // update at poscontrol update rate
+    if (dt >= _pos_control.get_dt_xy()) {
+        // allow the accel and speed values to be set without changing
+        // out of auto mode. This makes it easier to tune auto flight
+        _pos_control.set_accel_xy(_wp_accel_cms);
+        _pos_control.set_jerk_xy_to_default();
+        //_pos_control.set_accel_z(_wp_accel_z_cms);
+
+        // sanity check dt
+        if (dt >= 0.2f) {
+            dt = 0.0f;
+        }
+
+        // advance the target if necessary
+        if (!advance_wp_target_along_track_xy(dt)) {
+            // To-Do: handle inability to advance along track (probably because of missing terrain data)
+            ret = false;
+        }
+
+        // freeze feedforwards during known discontinuities
+        // TODO: why always consider Z axis discontinuous?
+        if (_flags.new_wp_destination) {
+            _flags.new_wp_destination = false;
+            _pos_control.freeze_ff_xy();
+        }
+        //_pos_control.freeze_ff_z();
+
+        _pos_control.update_xy_controller(AC_PosControl::XY_MODE_POS_ONLY, 1.0f, false);
+        check_wp_leash_length();
+
+        _wp_last_update = AP_HAL::millis();
+    }
+
+    return ret;
+}
+
+/// advance_wp_target_along_track_xy - move target location along track from origin to destination except z axis
+bool AC_WPNav::advance_wp_target_along_track_xy(float dt)
+{
+    float track_covered;        // distance (in cm) along the track that the vehicle has traveled.  Measured by drawing a perpendicular line from the track to the vehicle.
+    Vector3f track_error;       // distance error (in cm) from the track_covered position (i.e. closest point on the line to the vehicle) and the vehicle
+    float track_desired_max;    // the farthest distance (in cm) along the track that the leash will allow
+    float track_leash_slack;    // additional distance (in cm) along the track from our track_covered position that our leash will allow
+    bool reached_leash_limit = false;   // true when track has reached leash limit and we need to slow down the target point
+
+    // get current location
+    Vector3f curr_pos = _inav.get_position();
+
+    // calculate terrain adjustments
+    float terr_offset = 0.0f;
+    if (_terrain_alt && !get_terrain_offset(terr_offset)) {
+        return false;
+    }
+
+    // calculate 3d vector from segment's origin
+    Vector3f curr_delta = (curr_pos - Vector3f(0,0,terr_offset)) - _origin;
+
+	curr_delta.z = 0;
+	_pos_delta_unit.z = 0;
+
+    // calculate how far along the track we are
+    track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y + curr_delta.z * _pos_delta_unit.z;
+
+    // calculate the point closest to the vehicle on the segment from origin to destination
+    Vector3f track_covered_pos = _pos_delta_unit * track_covered;
+
+    // calculate the distance vector from the vehicle to the closest point on the segment from origin to destination
+    track_error = curr_delta - track_covered_pos;
+
+    // calculate the horizontal error
+    float track_error_xy = norm(track_error.x, track_error.y);
+
+    // calculate the vertical error
+    float track_error_z = fabsf(track_error.z);
+
+    // get up leash if we are moving up, down leash if we are moving down
+    float leash_z = track_error.z >= 0 ? _pos_control.get_leash_up_z() : _pos_control.get_leash_down_z();
+
+    // use pythagoras's theorem calculate how far along the track we could move the intermediate target before reaching the end of the leash
+    //   track_desired_max is the distance from the vehicle to our target point along the track.  It is the "hypotenuse" which we want to be no longer than our leash (aka _track_leash_length)
+    //   track_error is the line from the vehicle to the closest point on the track.  It is the "opposite" side
+    //   track_leash_slack is the line from the closest point on the track to the target point.  It is the "adjacent" side.  We adjust this so the track_desired_max is no longer than the leash
+    float track_leash_length_abs = fabsf(_track_leash_length);
+    float track_error_max_abs = MAX(_track_leash_length*track_error_z/leash_z, _track_leash_length*track_error_xy/_pos_control.get_leash_xy());
+    track_leash_slack = (track_leash_length_abs > track_error_max_abs) ? safe_sqrt(sq(_track_leash_length) - sq(track_error_max_abs)) : 0;
+    track_desired_max = track_covered + track_leash_slack;
+
+    // check if target is already beyond the leash
+    if (_track_desired > track_desired_max) {
+        reached_leash_limit = true;
+    }
+
+    // get current velocity
+    const Vector3f &curr_vel = _inav.get_velocity();
+    // get speed along track
+    float speed_along_track = curr_vel.x * _pos_delta_unit.x + curr_vel.y * _pos_delta_unit.y + curr_vel.z * _pos_delta_unit.z;
+
+    // calculate point at which velocity switches from linear to sqrt
+    float linear_velocity = _wp_speed_cms;
+    float kP = _pos_control.get_pos_xy_kP();
+    if (kP >= 0.0f) {   // avoid divide by zero
+        linear_velocity = _track_accel/kP;
+    }
+
+    // let the limited_speed_xy_cms be some range above or below current velocity along track
+    if (speed_along_track < -linear_velocity) {
+        // we are traveling fast in the opposite direction of travel to the waypoint so do not move the intermediate point
+        _limited_speed_xy_cms = 0;
+    }else{
+        // increase intermediate target point's velocity if not yet at the leash limit
+        if(dt > 0 && !reached_leash_limit) {
+            _limited_speed_xy_cms += 2.0f * _track_accel * dt;
+        }
+        // do not allow speed to be below zero or over top speed
+        _limited_speed_xy_cms = constrain_float(_limited_speed_xy_cms, 0.0f, _track_speed);
+
+        // check if we should begin slowing down
+        if (!_flags.fast_waypoint) {
+            float dist_to_dest = _track_length - _track_desired;
+            if (!_flags.slowing_down && dist_to_dest <= _slow_down_dist) {
+                _flags.slowing_down = true;
+            }
+            // if target is slowing down, limit the speed
+            if (_flags.slowing_down) {
+                _limited_speed_xy_cms = MIN(_limited_speed_xy_cms, get_slow_down_speed(dist_to_dest, _track_accel));
+            }
+        }
+
+        // if our current velocity is within the linear velocity range limit the intermediate point's velocity to be no more than the linear_velocity above or below our current velocity
+        if (fabsf(speed_along_track) < linear_velocity) {
+            _limited_speed_xy_cms = constrain_float(_limited_speed_xy_cms,speed_along_track-linear_velocity,speed_along_track+linear_velocity);
+        }
+    }
+    // advance the current target
+    if (!reached_leash_limit) {
+    	_track_desired += _limited_speed_xy_cms * dt;
+
+    	// reduce speed if we reach end of leash
+        if (_track_desired > track_desired_max) {
+        	_track_desired = track_desired_max;
+        	_limited_speed_xy_cms -= 2.0f * _track_accel * dt;
+        	if (_limited_speed_xy_cms < 0.0f) {
+        	    _limited_speed_xy_cms = 0.0f;
+        	}
+    	}
+    }
+
+    // do not let desired point go past the end of the track unless it's a fast waypoint
+    if (!_flags.fast_waypoint) {
+        _track_desired = constrain_float(_track_desired, 0, _track_length);
+    } else {
+        _track_desired = constrain_float(_track_desired, 0, _track_length + WPNAV_WP_FAST_OVERSHOOT_MAX);
+    }
+
+    // recalculate the desired position
+    Vector3f final_target = _origin + _pos_delta_unit * _track_desired;
+    // convert final_target.z to altitude above the ekf origin
+    final_target.z += terr_offset;
+    //final_target.z = curr_pos.z;
+    //_pos_control.set_pos_target(final_target);
+    _pos_control.set_pos_target_xy(final_target);
+
+    // check if we've reached the waypoint
+    if( !_flags.reached_destination ) {
+        if( _track_desired >= _track_length ) {
+            // "fast" waypoints are complete once the intermediate point reaches the destination
+            if (_flags.fast_waypoint) {
+                _flags.reached_destination = true;
+            }else{
+                // regular waypoints also require the copter to be within the waypoint radius
+                Vector3f dist_to_dest = (curr_pos - Vector3f(0,0,terr_offset)) - _destination;
+                if( /*dist_to_dest.length() <= _wp_radius_cm*/norm(dist_to_dest.x, dist_to_dest.y) <= _wp_radius_cm ) { // comment by weihli for zigzag remove z
+                    _flags.reached_destination = true;
+                }
+            }
+        }
+    }
+
+    // update the target yaw if origin and destination are at least 2m apart horizontally
+    if (_track_length_xy >= WPNAV_YAW_DIST_MIN) {
+        if (_pos_control.get_leash_xy() < WPNAV_YAW_DIST_MIN) {
+            // if the leash is short (i.e. moving slowly) and destination is at least 2m horizontally, point along the segment from origin to destination
+            set_yaw_cd(get_bearing_cd(_origin, _destination));
+        } else {
+            Vector3f horiz_leash_xy = final_target - curr_pos;
+            horiz_leash_xy.z = 0;
+            if (horiz_leash_xy.length() > MIN(WPNAV_YAW_DIST_MIN, _pos_control.get_leash_xy()*WPNAV_YAW_LEASH_PCT_MIN)) {
+                set_yaw_cd(RadiansToCentiDegrees(atan2f(horiz_leash_xy.y,horiz_leash_xy.x)));
+            }
+        }
+    }
+
+    // successfully advanced along track
+    return true;
+}
+/* End Weihli */
+
 /// update_wpnav - run the wp controller - should be called at 100hz or higher
 bool AC_WPNav::update_wpnav()
 {

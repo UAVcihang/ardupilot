@@ -864,8 +864,44 @@ void NavEKF2_core::selectHeightForFusion()
         fuseHgtData = true;
         // set the observation noise
         posDownObsNoise = sq(constrain_float(frontend->_baroAltNoise, 0.1f, 10.0f));
+
+        // 防止平飞机动掉高，水平速度一旦超过1m/s就用gps高度代替气压计高度
+        if(inFlight && validOrigin && gpsAccuracyGood && (frontend->_dropAlt > 0)) {
+        	// init baroHightStart and gpsHightStart
+        	if(is_zero(hgtMeaStart)) {
+        		hgtMeaStart = hgtMea;
+        	}
+        	if(is_zero(gpsHeightStart)) {
+        		gpsHeightStart = gpsDataDelayed.hgt;
+        	}
+
+        	float velHorizontal = norm(stateStruct.velocity.x, stateStruct.velocity.y);
+        	if(velHorizontal >= 1.0f) {
+        		if(hoverHorizontal == true) {
+        			hgtMeaStart = hgtMea;
+        			gpsHeightStart = gpsDataDelayed.hgt;
+        			hoverHorizontal = false;
+        		}
+        		// 以gps高度补偿气压
+        		hgtMea = hgtMeaStart + (gpsDataDelayed.hgt - gpsHeightStart);
+
+        		// 设置观测噪声，使用GPS接收机报告的精度
+        		if(gpsHgtAccuracy > 0.0f) {
+        			posDownObsNoise = sq(constrain_float(gpsHgtAccuracy, 1.5f * frontend->_gpsHorizPosNoise, 100.0f));
+        		} else {
+        			posDownObsNoise = sq(constrain_float(1.5f * frontend->_gpsHorizPosNoise, 0.1f, 10.0f));
+        		}
+
+        		finishMoveTime_ms = AP_HAL::millis();
+        	}
+        	else if(velHorizontal < 1.0f && (AP_HAL::millis() - finishMoveTime_ms >= 1000) && hoverHorizontal == false) {
+        		hoverHorizontal = true;
+        	}
+        }
         // reduce weighting (increase observation noise) on baro if we are likely to be in ground effect
-        if (getTakeoffExpected() || getTouchdownExpected()) {
+        // 起飞降落时增大气压计方差，从而减小气压计权重
+        // 刹车时也增加气压计方差，从而减小气压计权重
+        if (getTakeoffExpected() || getTouchdownExpected() || getBrakeExpected()) {
             posDownObsNoise *= frontend->gndEffectBaroScaler;
         }
         // If we are in takeoff mode, the height measurement is limited to be no less than the measurement at start of takeoff

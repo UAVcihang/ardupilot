@@ -394,11 +394,28 @@ void NavEKF2_core::detectFlight()
 // determine if a takeoff is expected so that we can compensate for expected barometer errors due to ground effect
 bool NavEKF2_core::getTakeoffExpected()
 {
-    if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > frontend->gndEffectTimeout_ms) {
+    if (expectGndEffectTakeoff && imuSampleTime_ms - takeoffExpectedSet_ms > frontend->turbulenceEffectTimeout_ms) {
         expectGndEffectTakeoff = false;
     }
 
     return expectGndEffectTakeoff;
+}
+
+// 获取刹车状态
+bool NavEKF2_core::getBrakeExpected()
+{
+    if (expectTurbulenceBrake && imuSampleTime_ms - brakeExpectedSet_ms > frontend->turbulenceEffectTimeout_ms) {
+    	expectTurbulenceBrake = false;
+    }
+
+    return expectTurbulenceBrake;
+}
+
+// 设置刹车参数
+void NavEKF2_core::setBrakeExpected(bool val)
+{
+	brakeExpectedSet_ms = imuSampleTime_ms;
+	expectTurbulenceBrake = val;
 }
 
 // called by vehicle code to specify that a takeoff is happening

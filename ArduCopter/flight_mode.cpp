@@ -118,6 +118,11 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
             success = guided_nogps_init(ignore_checks);
             break;
 
+        // add by weihli
+        case ZIGZAG:
+            success = zigzag_init(ignore_checks);
+            break;
+
         default:
             success = false;
             break;
@@ -259,6 +264,11 @@ void Copter::update_flight_mode()
             guided_nogps_run();
             break;
 
+        // add by weihli
+        case ZIGZAG:
+            zigzag_run();
+            break;
+
         default:
             break;
     }
@@ -281,6 +291,18 @@ void Copter::exit_mode(control_mode_t old_control_mode, control_mode_t new_contr
 #if MOUNT == ENABLED
         camera_mount.set_mode_to_default();
 #endif  // MOUNT == ENABLED
+    }
+
+    // add by weihli
+    else if(old_control_mode == ZIGZAG) {
+    	zigzag_stop();
+    	zigzag_save();
+    	//如果飞机已解锁  则记录退出zigzag模式的时间
+    	if(motors->armed()) {
+    		//zigzag_waypoint_state.action = true;
+    		zigzag_waypoint_state.flag = zigzag_waypoint_state.flag << 1;
+    	//zigzag_waypoint_state.last_exit_time_ms = millis();
+    	}
     }
 
     // smooth throttle transition when switching from manual to automatic flight modes
@@ -326,6 +348,7 @@ bool Copter::mode_requires_GPS(control_mode_t mode)
         case BRAKE:
         case AVOID_ADSB:
         case THROW:
+        case ZIGZAG:
             return true;
         default:
             return false;
@@ -432,6 +455,9 @@ void Copter::notify_flight_mode(control_mode_t mode)
         case GUIDED_NOGPS:
             notify.set_flight_mode_str("GNGP");
             break;
+        case ZIGZAG:
+        	notify.set_flight_mode_str("ZIG");
+        	break;
         default:
             notify.set_flight_mode_str("----");
             break;
@@ -498,6 +524,9 @@ void Copter::print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case GUIDED_NOGPS:
         port->printf("GUIDED_NOGPS");
         break;
+    case ZIGZAG:
+    	port->printf("ZIGZAG");
+    	break;
     default:
         port->printf("Mode(%u)", (unsigned)mode);
         break;

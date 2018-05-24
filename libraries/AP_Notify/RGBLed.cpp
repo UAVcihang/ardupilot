@@ -135,6 +135,88 @@ void RGBLed::update_colours(void)
         return;
     }
     
+    // add by weihli
+    // Record A/B point pattern
+    // record A point flash blue; record B point flash yellow
+    if(AP_Notify::flags.zigzag_record >1){
+    	// record B point
+    	bool yellow = ((AP_Notify::flags.zigzag_record%2) == 0)?false:true;
+    	switch(step) {
+    	case 0:
+    	case 1:
+    	case 2:
+    	case 3:
+    	case 4:
+    		if(yellow) {
+                // yellow on
+                _red_des = brightness;
+                _blue_des = _led_off;
+                _green_des = brightness;
+    		}
+    		else{
+                // blue on
+                _red_des = _led_off;
+                _blue_des = brightness;
+                _green_des = _led_off;
+    		}
+    		break;
+    	case 5:
+    	case 6:
+    	case 7:
+    	case 8:
+            // blue on
+            _red_des = _led_off;
+            _blue_des = _led_off;
+            _green_des = _led_off;
+    		break;
+    	case 9:
+    		if(yellow) {
+    			AP_Notify::flags.zigzag_record /= 3;
+    		}
+    		else {
+    			AP_Notify::flags.zigzag_record /= 2;
+    		}
+    		break;
+    	}
+
+    	return;
+    }
+
+    // for compass calibration
+    if(AP_Notify::flags.compass_cal_status != 0)
+    {
+    	switch(AP_Notify::flags.compass_cal_status)
+    	{
+    	case 1:
+            // red on
+            _red_des = brightness;
+            _blue_des = brightness;
+            _green_des = _led_off;
+    		break;
+    	case 2:
+            // red on
+            _red_des = brightness;
+            _blue_des = _led_off;
+            _green_des = brightness;
+    		break;
+    	case 3:
+            // red on
+            _red_des = _led_off;
+            _blue_des = brightness;
+            _green_des = brightness;
+    		break;
+    	case 4:
+            // red on
+            _red_des = brightness;
+            _blue_des = _led_off;
+            _green_des = _led_off;
+    		break;
+    	default:
+    		break;
+    	}
+    	return;
+    }
+
     // save trim and esc calibration pattern
     if (AP_Notify::flags.save_trim || AP_Notify::flags.esc_calibration) {
         switch(step) {

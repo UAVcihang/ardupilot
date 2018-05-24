@@ -1,0 +1,9 @@
+1、修改flash大小 1008K ---> 2032K (nuttx-config/px4fmu-v2/scripts/ld.script)
+2、添加zigzag作业模式
+	-- 作业期间 方向舵不可控 油门可控高度
+	
+	
+	
+3、当uavcan使能后，如果没有uavcan的气压数据，气压计解锁检测不通过；barometer_checks的bug,barometer.all_healthy()改成barometer.healthy() 
+
+4、平飞掉高、刹车掉高  测试中

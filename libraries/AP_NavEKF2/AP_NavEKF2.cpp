@@ -534,6 +534,8 @@ const AP_Param::GroupInfo NavEKF2::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("MAG_MASK", 48, NavEKF2, _magMask, 0),
 
+    AP_GROUPINFO("DROP_ALT", 49, NavEKF2, _dropAlt, 0),
+
     AP_GROUPEND
 };
 
@@ -564,6 +566,7 @@ NavEKF2::NavEKF2(const AP_AHRS *ahrs, AP_Baro &baro, const RangeFinder &rng) :
     flowTimeDeltaAvg_ms(100),       // average interval between optical flow measurements (msec)
     flowIntervalMax_ms(100),        // maximum allowable time between flow fusion events
     gndEffectTimeout_ms(1000),      // time in msec that baro ground effect compensation will timeout after initiation
+    turbulenceEffectTimeout_ms(300), // add by weihli
     gndEffectBaroScaler(4.0f),      // scaler applied to the barometer observation variance when operating in ground effect
     gndGradientSigma(50),           // RMS terrain gradient percentage assumed by the terrain height estimation
     fusionTimeStep_ms(10),          // The minimum number of msec between covariance prediction and fusion operations
@@ -1143,6 +1146,17 @@ void NavEKF2::setTouchdownExpected(bool val)
             core[i].setTouchdownExpected(val);
         }
     }
+}
+
+// add by weihli
+// 刹车设置外部接口
+void NavEKF2::setBrakeExpected(bool val)
+{
+	if(core) {
+		for (uint8_t i=0; i<num_cores; i++) {
+			core[i].setBrakeExpected(val);
+		}
+	}
 }
 
 // Set to true if the terrain underneath is stable enough to be used as a height reference

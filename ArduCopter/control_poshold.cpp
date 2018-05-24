@@ -434,6 +434,10 @@ void Copter::poshold_run()
                 case POSHOLD_BRAKE_TO_LOITER:
                     // reduce brake_to_loiter timer
                     if (poshold.brake_to_loiter_timer > 0) {
+
+                    	// É²³µÆøÑ¹ÂÒÁ÷
+                    	update_turbulence_effect_detector();
+
                         poshold.brake_to_loiter_timer--;
                     } else {
                         // progress to full loiter on next iteration

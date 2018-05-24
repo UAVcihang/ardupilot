@@ -209,6 +209,14 @@ public:
     /// set_pos_target in cm from home
     void set_pos_target(const Vector3f& position);
 
+    /// add by weihli
+    // for zigzag
+    void set_pos_target_xy(const Vector3f& position) {
+    	_pos_target.x = position.x;
+    	_pos_target.y = position.y;
+    }
+    /// end weihli
+
     /// set_xy_target in cm from home
     void set_xy_target(float x, float y);
 
