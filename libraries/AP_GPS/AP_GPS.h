@@ -358,6 +358,12 @@ public:
         return time_epoch_usec(primary_instance);
     }
 
+    // for mqtt
+    uint32_t time_epoch_sec(uint8_t instance) const;
+    uint32_t time_epoch_sec() const {
+    	return time_epoch_sec(primary_instance);
+    }
+
     // convert GPS week and millis to unix epoch in ms
     static uint64_t time_epoch_convert(uint16_t gps_week, uint32_t gps_ms);
 

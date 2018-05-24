@@ -119,6 +119,8 @@ void Copter::init_ardupilot()
     // initialise serial ports
     serial_manager.init();
 
+    // mqtt 初始化  必须在serial_manager初始化好后
+    mqtt.init(serial_manager);
     // setup first port early to allow BoardConfig to report errors
     gcs_chan[0].setup_uart(serial_manager, AP_SerialManager::SerialProtocol_MAVLink, 0);
 

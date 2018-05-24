@@ -131,6 +131,9 @@
 #include <SITL/SITL.h>
 #endif
 
+// MQTT 对接哈工大惠达能机平台
+#include <AC_MQTT/AC_MQTT.h>
+
 
 class Copter : public AP_HAL::HAL::Callbacks {
 public:
@@ -214,6 +217,8 @@ private:
     SITL::SITL sitl;
 #endif
 
+    // MQTT
+    AC_MQTT mqtt{&ahrs};
     // Mission library
     AP_Mission mission;
 
@@ -1193,6 +1198,8 @@ private:
     void init_capabilities(void);
     void dataflash_periodic(void);
     void accel_cal_update(void);
+    // 往串口发送MQTT协议的数据
+    void send_mqtt(void);
 
 public:
     void mavlink_delay_cb();

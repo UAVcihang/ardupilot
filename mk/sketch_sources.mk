@@ -3,6 +3,7 @@
 #
 
 SRCSUFFIXES = *.cpp
+SRCSUFFIXES_C = *.c
 
 MAKE_INC=$(wildcard $(SRCROOT)/make.inc)
 ifeq (,$(MAKE_INC))
@@ -78,6 +79,7 @@ SKETCHLIBS		:=	$(wildcard $(addprefix $(SKETCHBOOK)/libraries/,$(LIBTOKENS)))
 SKETCHLIBNAMES		:=	$(notdir $(SKETCHLIBS))
 SKETCHLIBSRCDIRS	:=	$(SKETCHLIBS) $(addsuffix /utility,$(SKETCHLIBS))
 SKETCHLIBSRCS		:=	$(wildcard $(foreach suffix,$(SRCSUFFIXES),$(addsuffix /$(suffix),$(SKETCHLIBSRCDIRS))))
+SKETCHLIBSRCS       +=  $(wildcard $(foreach suffix,$(SRCSUFFIXES_C),$(addsuffix /$(suffix),$(SKETCHLIBSRCDIRS))))
 SKETCHLIBOBJS		:=	$(addsuffix .o,$(basename $(subst $(SKETCHBOOK),$(BUILDROOT),$(SKETCHLIBSRCS))))
 SKETCHLIBINCLUDES	:=	-I$(SKETCHBOOK)/libraries/ -I$(BUILDROOT)/libraries/ -I$(BUILDROOT)/libraries/GCS_MAVLink/
 SKETCHLIBSRCSRELATIVE	:=	$(subst $(SKETCHBOOK)/,,$(SKETCHLIBSRCS))

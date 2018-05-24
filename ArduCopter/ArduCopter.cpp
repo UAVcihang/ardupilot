@@ -103,6 +103,8 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(three_hz_loop,          3,     75),
     SCHED_TASK(compass_accumulate,   100,    100),
     SCHED_TASK(barometer_accumulate,  50,     90),
+    // 添加发送MQTT协议数据的任务 1Hz
+    SCHED_TASK(send_mqtt,              1,     500),
 #if PRECISION_LANDING == ENABLED
     SCHED_TASK(update_precland,      400,     50),
 #endif
@@ -474,6 +476,12 @@ void Copter::three_hz_loop()
 
     // update ch6 in flight tuning
     tuning();
+}
+
+// 发送MQTT数据
+void Copter::send_mqtt()
+{
+	mqtt.update();
 }
 
 // one_hz_loop - runs at 1Hz

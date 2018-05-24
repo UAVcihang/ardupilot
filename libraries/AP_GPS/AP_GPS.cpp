@@ -346,6 +346,20 @@ uint64_t AP_GPS::time_epoch_usec(uint8_t instance)
     return (fix_time_ms + (AP_HAL::millis() - istate.last_gps_time_ms)) * 1000ULL;
 }
 
+/**
+ * calculate current time since the unix epoch in second
+ * for mqtt
+ * */
+uint32_t AP_GPS::time_epoch_sec(uint8_t instance) const{
+    const GPS_State &istate = state[instance];
+    if (istate.last_gps_time_ms == 0) {
+        return 0;
+    }
+    uint64_t fix_time_ms = time_epoch_convert(istate.time_week, istate.time_week_ms);
+    // add in the milliseconds since the last fix
+    return (fix_time_ms + (AP_HAL::millis() - istate.last_gps_time_ms)) * 1e-3;
+}
+
 /*
   send some more initialisation string bytes if there is room in the
   UART transmit buffer

@@ -7,3 +7,11 @@
 3、当uavcan使能后，如果没有uavcan的气压数据，气压计解锁检测不通过；barometer_checks的bug,barometer.all_healthy()改成barometer.healthy() 
 
 4、平飞掉高、刹车掉高  测试中
+
+5、添加library AC_MQTT 集成mqtt库(https://github.eclipse/paho.mqtt.c)支持MQTT协议，对接哈工大农机平台 服务器地址：120.132.101.145：1883
+飞控通过串口把数据发送到UL865板，再通过2g发送数据到服务器
+添加这个功能后，飞控启动时间会变长，2g模块要连接上服务器需要时间
+(连接服务器采用非异步方式，所以耗时较长；目前paho.mqtt.c这个库新添加了异步方式，以后版本可以采用异步方式，节省启动时间)
+因为mqtt库是C语言的，所以应该修改编译方式,把C文件添加进编译中（在mk/sketch_sources.mk,添加对c文件的编译）
+
+6、添加NRA24 毫米波雷达 接口
