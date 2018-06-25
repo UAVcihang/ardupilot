@@ -38,7 +38,7 @@ static struct {
     poshold_rp_mode pitch_mode           : 3;    // pitch mode: pilot override, brake or loiter
     uint8_t braking_time_updated_roll   : 1;    // true once we have re-estimated the braking time.  This is done once as the vehicle begins to flatten out after braking
     uint8_t braking_time_updated_pitch  : 1;    // true once we have re-estimated the braking time.  This is done once as the vehicle begins to flatten out after braking
-    uint8_t loiter_reset_I              : 1;    // true the very first time PosHold enters loiter, thereafter we trust the i terms loiter has
+    //uint8_t loiter_reset_I              : 1;    // true the very first time PosHold enters loiter, thereafter we trust the i terms loiter has
 
     // pilot input related variables
     float pilot_roll;                         // pilot requested roll angle (filtered to slow returns to zero)
@@ -81,7 +81,7 @@ bool Copter::poshold_init(bool ignore_checks)
     }
     
     // initialize vertical speeds and acceleration
-    pos_control->set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    pos_control->set_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_accel_z(g.pilot_accel_z);
 
     // initialise position and desired velocity
@@ -103,7 +103,7 @@ bool Copter::poshold_init(bool ignore_checks)
         poshold.pitch_mode = POSHOLD_LOITER;
         // set target to current position
         // only init here as we can switch to PosHold in flight with a velocity <> 0 that will be used as _last_vel in PosControl and never updated again as we inhibit Reset_I
-        wp_nav->init_loiter_target();
+        loiter_nav->init_target();
     }else{
         // if not landed start in pilot override to avoid hard twitch
         poshold.roll_mode = POSHOLD_PILOT_OVERRIDE;
@@ -111,7 +111,7 @@ bool Copter::poshold_init(bool ignore_checks)
     }
 
     // loiter's I terms should be reset the first time only
-    poshold.loiter_reset_I = true;
+    //poshold.loiter_reset_I = true;
 
     // initialise wind_comp each time PosHold is switched on
     poshold.wind_comp_ef.zero();
@@ -137,13 +137,14 @@ void Copter::poshold_run()
     const Vector3f& vel = inertial_nav.get_velocity();
 
     // initialize vertical speeds and acceleration
-    pos_control->set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    // 下降速度当独设立参数
+    pos_control->set_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_accel_z(g.pilot_accel_z);
 
     // if not auto armed or motor interlock not enabled set throttle to zero and exit immediately
     if (!motors->armed() || !ap.auto_armed || !motors->get_interlock()) {
         motors->set_desired_spool_state(AP_Motors::DESIRED_SPIN_WHEN_ARMED);
-        wp_nav->init_loiter_target();
+        loiter_nav->init_target();
         attitude_control->set_throttle_out_unstabilized(0,true,g.throttle_filt);
         pos_control->relax_alt_hold_controllers(0.0f);
         return;
@@ -159,7 +160,7 @@ void Copter::poshold_run()
 
         // get pilot desired climb rate (for alt-hold mode and take-off)
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
-        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
 
         // get takeoff adjusted pilot and takeoff climb rates
         takeoff_get_climb_rates(target_climb_rate, takeoff_climb_rate);
@@ -184,7 +185,7 @@ void Copter::poshold_run()
 
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
-        wp_nav->loiter_soften_for_landing();
+    	loiter_nav->soften_for_landing();
     }
 
     // if landed initialise loiter targets, set throttle to zero and exit
@@ -195,17 +196,17 @@ void Copter::poshold_run()
         } else {
             motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
         }
-        wp_nav->init_loiter_target();
+        loiter_nav->init_target();
         attitude_control->reset_rate_controller_I_terms();
         attitude_control->set_yaw_target_to_current_heading();
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0/*, get_smoothing_gain()*/);
         pos_control->relax_alt_hold_controllers(0.0f);   // forces throttle output to go to zero
         pos_control->update_z_controller();
         return;
     }else{
         // convert pilot input to lean angles
-        get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
-
+        //get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
+    	get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, attitude_control->get_althold_lean_angle_max());
         // convert inertial nav earth-frame velocities to body-frame
         // To-Do: move this to AP_Math (or perhaps we already have a function to do this)
         vel_fw = vel.x*ahrs.cos_yaw() + vel.y*ahrs.sin_yaw();
@@ -416,9 +417,9 @@ void Copter::poshold_run()
             poshold.pitch_mode = POSHOLD_BRAKE_TO_LOITER;
             poshold.brake_to_loiter_timer = POSHOLD_BRAKE_TO_LOITER_TIMER;
             // init loiter controller
-            wp_nav->init_loiter_target(inertial_nav.get_position(), poshold.loiter_reset_I); // (false) to avoid I_term reset. In original code, velocity(0,0,0) was used instead of current velocity: wp_nav->init_loiter_target(inertial_nav.get_position(), Vector3f(0,0,0));
+            loiter_nav->init_target(inertial_nav.get_position()); // (false) to avoid I_term reset. In original code, velocity(0,0,0) was used instead of current velocity: wp_nav->init_loiter_target(inertial_nav.get_position(), Vector3f(0,0,0));
             // at this stage, we are going to run update_loiter that will reset I_term once. From now, we ensure next time that we will enter loiter and update it, I_term won't be reset anymore
-            poshold.loiter_reset_I = false;
+            //poshold.loiter_reset_I = false;
             // set delay to start of wind compensation estimate updates
             poshold.wind_comp_start_timer = POSHOLD_WIND_COMP_START_TIMER;
         }
@@ -453,11 +454,11 @@ void Copter::poshold_run()
                     poshold_update_brake_angle_from_velocity(poshold.brake_pitch, -vel_fw);
 
                     // run loiter controller
-                    wp_nav->update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+                    loiter_nav->update(ekfGndSpdLimit, ekfNavVelGainScaler);
 
                     // calculate final roll and pitch output by mixing loiter and brake controls
-                    poshold.roll = poshold_mix_controls(brake_to_loiter_mix, poshold.brake_roll + poshold.wind_comp_roll, wp_nav->get_roll());
-                    poshold.pitch = poshold_mix_controls(brake_to_loiter_mix, poshold.brake_pitch + poshold.wind_comp_pitch, wp_nav->get_pitch());
+                    poshold.roll = poshold_mix_controls(brake_to_loiter_mix, poshold.brake_roll + poshold.wind_comp_roll, loiter_nav->get_roll());
+                    poshold.pitch = poshold_mix_controls(brake_to_loiter_mix, poshold.brake_pitch + poshold.wind_comp_pitch, loiter_nav->get_pitch());
 
                     // check for pilot input
                     if (!is_zero(target_roll) || !is_zero(target_pitch)) {
@@ -484,11 +485,11 @@ void Copter::poshold_run()
 
                 case POSHOLD_LOITER:
                     // run loiter controller
-                    wp_nav->update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+                    loiter_nav->update(ekfGndSpdLimit, ekfNavVelGainScaler);
 
                     // set roll angle based on loiter controller outputs
-                    poshold.roll = wp_nav->get_roll();
-                    poshold.pitch = wp_nav->get_pitch();
+                    poshold.roll = loiter_nav->get_roll();
+                    poshold.pitch = loiter_nav->get_pitch();
 
                     // update wind compensation estimate
                     poshold_update_wind_comp_estimate();
@@ -528,7 +529,7 @@ void Copter::poshold_run()
         poshold.pitch = constrain_int16(poshold.pitch, -aparm.angle_max, aparm.angle_max);
 
         // update attitude controller targets
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(poshold.roll, poshold.pitch, target_yaw_rate, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(poshold.roll, poshold.pitch, target_yaw_rate/*, get_smoothing_gain()*/);
 
         // adjust climb rate using rangefinder
         if (rangefinder_alt_ok()) {

@@ -110,6 +110,7 @@ void Copter::esc_calibration_passthrough()
         // flash LEDs
         esc_calibration_notify();
 
+        gcs_check_input();
         // read pilot input
         read_radio();
 

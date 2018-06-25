@@ -333,7 +333,7 @@ void Copter::send_pid_tuning(mavlink_channel_t chan)
         }
     }
     if (g.gcs_pid_mask & 8) {
-        const DataFlash_Class::PID_Info &pid_info = g.pid_accel_z.get_pid_info();
+        const DataFlash_Class::PID_Info &pid_info = pos_control->get_accel_z_pid().get_pid_info();//g.pid_accel_z.get_pid_info();
         mavlink_msg_pid_tuning_send(chan, PID_TUNING_ACCZ, 
                                     pid_info.desired*0.01f,
                                     -(ahrs.get_accel_ef_blended().z + GRAVITY_MSS),
@@ -1555,11 +1555,12 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
                     bool shot_mode = (!is_zero(packet.param1) && (copter.control_mode == GUIDED || copter.control_mode == GUIDED_NOGPS));
 
                     if (!shot_mode) {
-                        if (copter.set_mode(BRAKE, MODE_REASON_GCS_COMMAND)) {
+                        /*if (copter.set_mode(BRAKE, MODE_REASON_GCS_COMMAND)) {
                             copter.brake_timeout_to_loiter_ms(2500);
                         } else {
                             copter.set_mode(ALT_HOLD, MODE_REASON_GCS_COMMAND);
-                        }
+                        }*/
+                    	copter.set_mode(ALT_HOLD, MODE_REASON_GCS_COMMAND);
                     } else {
                         // SoloLink is expected to handle pause in shots
                     }
@@ -1891,6 +1892,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
 
     case MAVLINK_MSG_ID_LOG_REQUEST_DATA:
         copter.in_log_download = true;
+        //DataFlash_Class::instance()->set_in_log_download(true);
         /* no break */
     case MAVLINK_MSG_ID_LOG_ERASE:
         /* no break */
@@ -1901,6 +1903,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
         break;
     case MAVLINK_MSG_ID_LOG_REQUEST_END:
         copter.in_log_download = false;
+        //DataFlash_Class::instance()->set_in_log_download(false);
         if (!copter.in_mavlink_delay && !copter.motors->armed()) {
             handle_log_message(msg, copter.DataFlash);
         }

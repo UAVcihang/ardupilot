@@ -231,6 +231,8 @@ void Vector3<T>::rotate(enum Rotation rotation)
         z = -0.932324f * tmpx +  0.361625f * tmpy +  0.000000f * tmpz;
         return;
     }
+    case ROTATION_CUSTOM: // no-op; caller should perform custom rotations via matrix multiplication
+        return;
     }
 }
 

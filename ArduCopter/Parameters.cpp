@@ -260,14 +260,14 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Standard
     GSCALAR(land_speed_high,        "LAND_SPEED_HIGH",   0),
     
-    // @Param: PILOT_VELZ_MAX
+    // @Param: pilot_velocity_z_max
     // @DisplayName: Pilot maximum vertical speed
     // @Description: The maximum vertical velocity the pilot may request in cm/s
     // @Units: Centimeters/Second
     // @Range: 50 500
     // @Increment: 10
     // @User: Standard
-    GSCALAR(pilot_velocity_z_max,     "PILOT_VELZ_MAX",   PILOT_VELZ_MAX),
+    GSCALAR(pilot_speed_up,     "PILOT_SPEED_UP",   PILOT_VELZ_MAX),
 
     // @Param: PILOT_ACCEL_Z
     // @DisplayName: Pilot vertical acceleration
@@ -463,7 +463,7 @@ const AP_Param::Info Copter::var_info[] = {
     // @Increment: 10
     // @User: Standard
     // @Values: 0:Very Soft, 25:Soft, 50:Medium, 75:Crisp, 100:Very Crisp
-    GSCALAR(rc_feel_rp, "RC_FEEL_RP",  RC_FEEL_RP_MEDIUM),
+    //GSCALAR(rc_feel_rp, "RC_FEEL_RP",  RC_FEEL_RP_MEDIUM),
 
 #if POSHOLD_ENABLED == ENABLED
     // @Param: PHLD_BRAKE_RATE
@@ -586,14 +586,14 @@ const AP_Param::Info Copter::var_info[] = {
     // @Increment: 10
     // @Units: cm/s/s
     // @User: Advanced
-    GGROUP(pi_vel_xy,   "VEL_XY_",  AC_PI_2D),
+    //GGROUP(pi_vel_xy,   "VEL_XY_",  AC_PI_2D),
 
     // @Param: VEL_Z_P
     // @DisplayName: Velocity (vertical) P gain
     // @Description: Velocity (vertical) P gain.  Converts the difference between desired vertical speed and actual speed into a desired acceleration that is passed to the throttle acceleration controller
     // @Range: 1.000 8.000
     // @User: Standard
-    GGROUP(p_vel_z,     "VEL_Z_", AC_P),
+    //GGROUP(p_vel_z,     "VEL_Z_", AC_P),
 
     // @Param: ACCEL_Z_P
     // @DisplayName: Throttle acceleration controller P gain
@@ -627,21 +627,21 @@ const AP_Param::Info Copter::var_info[] = {
     // @Range: 1.000 100.000
     // @Units: Hz
     // @User: Standard
-    GGROUP(pid_accel_z, "ACCEL_Z_", AC_PID),
+    //GGROUP(pid_accel_z, "ACCEL_Z_", AC_PID),
 
     // @Param: POS_Z_P
     // @DisplayName: Position (vertical) controller P gain
     // @Description: Position (vertical) controller P gain.  Converts the difference between the desired altitude and actual altitude into a climb or descent rate which is passed to the throttle rate controller
     // @Range: 1.000 3.000
     // @User: Standard
-    GGROUP(p_alt_hold,              "POS_Z_", AC_P),
+    //GGROUP(p_alt_hold,              "POS_Z_", AC_P),
 
     // @Param: POS_XY_P
     // @DisplayName: Position (horizonal) controller P gain
     // @Description: Loiter position controller P gain.  Converts the distance (in the latitude direction) to the target location into a desired speed which is then passed to the loiter latitude rate controller
     // @Range: 0.500 2.000
     // @User: Standard
-    GGROUP(p_pos_xy,                "POS_XY_", AC_P),
+    //GGROUP(p_pos_xy,                "POS_XY_", AC_P),
 
     // variables not in the g class which contain EEPROM saved variables
 
@@ -682,6 +682,10 @@ const AP_Param::Info Copter::var_info[] = {
     // @Group: WPNAV_
     // @Path: ../libraries/AC_WPNav/AC_WPNav.cpp
     GOBJECTPTR(wp_nav, "WPNAV_",       AC_WPNav),
+
+    // @Group: LOIT_
+    // @Path: ../libraries/AC_WPNav/AC_Loiter.cpp
+    GOBJECTPTR(loiter_nav, "LOIT_", AC_Loiter),
 
     // @Group: CIRCLE_
     // @Path: ../libraries/AC_WPNav/AC_Circle.cpp
@@ -865,6 +869,13 @@ const AP_Param::Info Copter::var_info[] = {
     // @Range: 0.001 0.006
     // @User: Standard
     GSCALAR(autotune_min_d, "AUTOTUNE_MIN_D", 0.001f),
+
+    // @Param: radio_type
+    // @DisplayName: radio_type
+    // @Description: radio_type width
+    // @Range: 0-1 0:futaba 1:cihang's radio
+    // @User: Standard
+    GSCALAR(radio_type, "rc_type", 0),
 
     // @Param: Zigzag_time
     // @DisplayName: Zigzag_time
@@ -1066,6 +1077,15 @@ const AP_Param::GroupInfo ParametersG2::var_info[] = {
      //
      AP_GROUPINFO("ab_bpmode", 30, ParametersG2, ab_bpMode, 0),
 
+     // @Param: PILOT_SPEED_DN
+     // @DisplayName: Pilot maximum vertical speed descending
+     // @Description: The maximum vertical descending velocity the pilot may request in cm/s
+     // @Units: cm/s
+     // @Range: 50 500
+     // @Increment: 10
+     // @User: Standard
+     AP_GROUPINFO("PILOT_SPEED_DN", 31, ParametersG2, pilot_speed_dn, 0),
+
     AP_GROUPEND
 };
 
@@ -1182,11 +1202,29 @@ void Copter::convert_pid_parameters(void)
         { Parameters::k_param_p_stabilize_yaw, 0, AP_PARAM_FLOAT, "ATC_ANG_YAW_P" },
         { Parameters::k_param_pid_rate_roll, 6, AP_PARAM_FLOAT, "ATC_RAT_RLL_FILT" },
         { Parameters::k_param_pid_rate_pitch, 6, AP_PARAM_FLOAT, "ATC_RAT_PIT_FILT" },
-        { Parameters::k_param_pid_rate_yaw, 6, AP_PARAM_FLOAT, "ATC_RAT_YAW_FILT" }
+        { Parameters::k_param_pid_rate_yaw, 6, AP_PARAM_FLOAT, "ATC_RAT_YAW_FILT" },
+        { Parameters::k_param_pi_vel_xy, 0, AP_PARAM_FLOAT, "PSC_VELXY_P" },
+        { Parameters::k_param_pi_vel_xy, 1, AP_PARAM_FLOAT, "PSC_VELXY_I" },
+        { Parameters::k_param_pi_vel_xy, 2, AP_PARAM_FLOAT, "PSC_VELXY_IMAX" },
+        { Parameters::k_param_pi_vel_xy, 3, AP_PARAM_FLOAT, "PSC_VELXY_FILT" },
+        { Parameters::k_param_p_vel_z, 0, AP_PARAM_FLOAT, "PSC_VELZ_P" },
+        { Parameters::k_param_pid_accel_z, 0, AP_PARAM_FLOAT, "PSC_ACCZ_P" },
+        { Parameters::k_param_pid_accel_z, 1, AP_PARAM_FLOAT, "PSC_ACCZ_I" },
+        { Parameters::k_param_pid_accel_z, 2, AP_PARAM_FLOAT, "PSC_ACCZ_D" },
+        { Parameters::k_param_pid_accel_z, 5, AP_PARAM_FLOAT, "PSC_ACCZ_IMAX" },
+        { Parameters::k_param_pid_accel_z, 6, AP_PARAM_FLOAT, "PSC_ACCZ_FILT" },
+        { Parameters::k_param_p_alt_hold, 0, AP_PARAM_FLOAT, "PSC_POSZ_P" },
+        { Parameters::k_param_p_pos_xy, 0, AP_PARAM_FLOAT, "PSC_POSXY_P" }
     };
     const AP_Param::ConversionInfo throttle_conversion_info[] = {
         { Parameters::k_param_throttle_min, 0, AP_PARAM_FLOAT, "MOT_SPIN_MIN" },
         { Parameters::k_param_throttle_mid, 0, AP_PARAM_FLOAT, "MOT_THST_HOVER" }
+    };
+    const AP_Param::ConversionInfo loiter_conversion_info[] = {
+        { Parameters::k_param_wp_nav, 4, AP_PARAM_FLOAT, "LOIT_SPEED" },
+        { Parameters::k_param_wp_nav, 7, AP_PARAM_FLOAT, "LOIT_BRK_JERK" },
+        { Parameters::k_param_wp_nav, 8, AP_PARAM_FLOAT, "LOIT_ACC_MAX" },
+        { Parameters::k_param_wp_nav, 9, AP_PARAM_FLOAT, "LOIT_BRK_ACCEL" }
     };
 
     // gains increase by 27% due to attitude controller's switch to use radians instead of centi-degrees
@@ -1219,6 +1257,19 @@ void Copter::convert_pid_parameters(void)
     table_size = ARRAY_SIZE(throttle_conversion_info);
     for (uint8_t i=0; i<table_size; i++) {
         AP_Param::convert_old_parameter(&throttle_conversion_info[i], 0.001f);
+    }
+
+    // convert RC_FEEL_RP to ATC_INPUT_TC
+    const AP_Param::ConversionInfo rc_feel_rp_conversion_info = { Parameters::k_param_rc_feel_rp, 0, AP_PARAM_INT8, "ATC_INPUT_TC" };
+    AP_Int8 rc_feel_rp_old;
+    if (AP_Param::find_old_parameter(&rc_feel_rp_conversion_info, &rc_feel_rp_old)) {
+        AP_Param::set_default_by_name(rc_feel_rp_conversion_info.new_name, (1.0f / (2.0f + rc_feel_rp_old.get() * 0.1f)));
+    }
+
+    // convert loiter parameters
+    table_size = ARRAY_SIZE(loiter_conversion_info);
+    for (uint8_t i=0; i<table_size; i++) {
+        AP_Param::convert_old_parameter(&loiter_conversion_info[i], 1.0f);
     }
 
     const uint8_t old_rc_keys[14] = { Parameters::k_param_rc_1_old,  Parameters::k_param_rc_2_old,

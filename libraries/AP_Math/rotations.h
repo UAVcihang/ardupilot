@@ -64,7 +64,8 @@ enum Rotation {
     ROTATION_ROLL_90_PITCH_180_YAW_90 = 36,
     ROTATION_ROLL_90_YAW_270     = 37,
     ROTATION_ROLL_90_PITCH_68_YAW_293 = 38,
-    ROTATION_MAX
+    ROTATION_MAX,
+    ROTATION_CUSTOM              = 100,
 };
 /*
 Here are the same values in a form sutable for a @Values attribute in

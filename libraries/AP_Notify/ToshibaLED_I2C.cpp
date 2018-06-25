@@ -38,7 +38,7 @@ extern const AP_HAL::HAL& hal;
 bool ToshibaLED_I2C::hw_init()
 {
     // first look for led on external bus
-    _dev = std::move(hal.i2c_mgr->get_device(TOSHIBA_LED_I2C_BUS_EXTERNAL, TOSHIBA_LED_I2C_ADDR));
+    _dev = std::move(hal.i2c_mgr->get_device(TOSHIBA_LED_I2C_BUS_INTERNAL/*TOSHIBA_LED_I2C_BUS_EXTERNAL*/, TOSHIBA_LED_I2C_ADDR));
     if (!_dev || !_dev->get_semaphore()->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
         return false;
     }
@@ -51,7 +51,7 @@ bool ToshibaLED_I2C::hw_init()
         // give back external bus semaphore
         _dev->get_semaphore()->give();
         // get internal I2C bus driver
-        _dev = std::move(hal.i2c_mgr->get_device(TOSHIBA_LED_I2C_BUS_INTERNAL, TOSHIBA_LED_I2C_ADDR));
+        _dev = std::move(hal.i2c_mgr->get_device(TOSHIBA_LED_I2C_BUS_EXTERNAL/*TOSHIBA_LED_I2C_BUS_INTERNAL*/, TOSHIBA_LED_I2C_ADDR));
         if (!_dev || !_dev->get_semaphore()->take(HAL_SEMAPHORE_BLOCK_FOREVER)) {
             return false;
         }

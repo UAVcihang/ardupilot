@@ -65,6 +65,7 @@ public:
         _optflow(nullptr),
         _airspeed(nullptr),
         _beacon(nullptr),
+        //_view(nullptr),
         _compass_last_update(0),
         _ins(ins),
         _baro(baro),
@@ -100,6 +101,11 @@ public:
 
     // empty virtual destructor
     virtual ~AP_AHRS() {}
+
+    // get singleton instance
+    static AP_AHRS *get_singleton() {
+        return _singleton;
+    }
 
     // init sets up INS board orientation
     virtual void init() {
@@ -446,6 +452,9 @@ public:
     // from which to decide the origin on its own
     virtual bool set_origin(const Location &loc) { return false; }
 
+    // returns the inertial navigation origin in lat/lon/alt
+    virtual bool get_origin(Location &ret) const { return false; }
+
     // return true if the AHRS object supports inertial navigation,
     // with very accurate position and velocity
     virtual bool have_inertial_nav(void) const {
@@ -509,6 +518,8 @@ public:
     // time that the AHRS has been up
     virtual uint32_t uptime_ms(void) const = 0;
 
+    virtual void setBrakeExpected(bool val) = 0;
+
     // get the selected ekf type, for allocation decisions
     int8_t get_ekf_type(void) const {
         return _ekf_type;
@@ -527,6 +538,20 @@ public:
     float getSSA(void);
 
     virtual void update_AOA_SSA(void);
+
+    // get_hgt_ctrl_limit - get maximum height to be observed by the
+    // control loops in meters and a validity flag.  It will return
+    // false when no limiting is required
+    virtual bool get_hgt_ctrl_limit(float &limit) const { return false; };
+
+    // rotate a 2D vector from earth frame to body frame
+    // in result, x is forward, y is right
+    Vector2f rotate_earth_to_body2D(const Vector2f &ef_vector) const;
+
+    // rotate a 2D vector from earth frame to body frame
+    // in input, x is forward, y is right
+    Vector2f rotate_body_to_earth2D(const Vector2f &bf) const;
+
 
 protected:
     AHRS_VehicleClass _vehicle_class;
@@ -624,6 +649,9 @@ protected:
     // AOA and SSA
     float _AOA, _SSA;
     uint32_t _last_AOA_update_ms;
+
+private:
+    static AP_AHRS *_singleton;
 };
 
 #include "AP_AHRS_DCM.h"
@@ -634,3 +662,7 @@ protected:
 #else
 #define AP_AHRS_TYPE AP_AHRS
 #endif
+
+namespace AP {
+    AP_AHRS &ahrs();
+};

@@ -63,36 +63,44 @@ void Copter::tuning() {
 
     // Altitude and throttle tuning
     case TUNING_ALTITUDE_HOLD_KP:
-        g.p_alt_hold.kP(tuning_value);
+        //g.p_alt_hold.kP(tuning_value);
+    	pos_control->get_pos_z_p().kP(tuning_value);
         break;
 
     case TUNING_THROTTLE_RATE_KP:
-        g.p_vel_z.kP(tuning_value);
+        //g.p_vel_z.kP(tuning_value);
+    	pos_control->get_vel_z_p().kP(tuning_value);
         break;
 
     case TUNING_ACCEL_Z_KP:
-        g.pid_accel_z.kP(tuning_value);
+    	pos_control->get_accel_z_pid().kP(tuning_value);
+        //g.pid_accel_z.kP(tuning_value);
         break;
 
     case TUNING_ACCEL_Z_KI:
-        g.pid_accel_z.kI(tuning_value);
+        //g.pid_accel_z.kI(tuning_value);
+    	pos_control->get_accel_z_pid().kI(tuning_value);
         break;
 
     case TUNING_ACCEL_Z_KD:
-        g.pid_accel_z.kD(tuning_value);
+        //g.pid_accel_z.kD(tuning_value);
+    	pos_control->get_accel_z_pid().kD(tuning_value);
         break;
 
     // Loiter and navigation tuning
     case TUNING_LOITER_POSITION_KP:
-        g.p_pos_xy.kP(tuning_value);
+        //g.p_pos_xy.kP(tuning_value);
+    	pos_control->get_pos_xy_p().kP(tuning_value);
         break;
 
     case TUNING_VEL_XY_KP:
-        g.pi_vel_xy.kP(tuning_value);
+        //g.pi_vel_xy.kP(tuning_value);
+    	pos_control->get_vel_xy_pid().kP(tuning_value);
         break;
 
     case TUNING_VEL_XY_KI:
-        g.pi_vel_xy.kI(tuning_value);
+        //g.pi_vel_xy.kI(tuning_value);
+    	pos_control->get_vel_xy_pid().kI(tuning_value);
         break;
 
     case TUNING_WP_SPEED:
@@ -176,7 +184,8 @@ void Copter::tuning() {
 
     case TUNING_RC_FEEL_RP:
         // roll-pitch input smoothing
-        g.rc_feel_rp = control_in / 10;
+        //g.rc_feel_rp = control_in / 10;
+    	attitude_control->set_input_tc(1.0f / (2.0f + MAX((control_in * 0.01f), 0.0f)));
         break;
 
     case TUNING_RATE_PITCH_KP:

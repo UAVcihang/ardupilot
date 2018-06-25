@@ -157,7 +157,7 @@ Compass::_accept_calibration(uint8_t i, bool force)
         _cal_saved[i] = true;
 
         Vector3f ofs, diag, offdiag;
-        cal.get_calibration(ofs, diag, offdiag);
+        cal.get_calibration(ofs, diag, offdiag, force);
 
         set_and_save_offsets(i, ofs);
         set_and_save_diagonals(i,diag);

@@ -164,7 +164,7 @@ void RGBLed::update_colours(void)
     	case 6:
     	case 7:
     	case 8:
-            // blue on
+            // all off
             _red_des = _led_off;
             _blue_des = _led_off;
             _green_des = _led_off;

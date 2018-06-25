@@ -68,7 +68,9 @@ public:
         return trig.sin_yaw;
     }
 
-
+    void setBrakeExpected(bool val)const{
+    	ahrs.setBrakeExpected(val);
+    }
     /*
       wrappers around ahrs functions which pass-thru directly. See
       AP_AHRS.h for description of each function

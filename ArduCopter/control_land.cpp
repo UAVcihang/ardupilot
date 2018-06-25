@@ -13,8 +13,8 @@ bool Copter::land_init(bool ignore_checks)
     if (land_with_gps) {
         // set target to stopping point
         Vector3f stopping_point;
-        wp_nav->get_loiter_stopping_point_xy(stopping_point);
-        wp_nav->init_loiter_target(stopping_point);
+        loiter_nav->get_stopping_point_xy(stopping_point);
+        loiter_nav->init_target(stopping_point);
     }
 
     // initialize vertical speeds and leash lengths
@@ -57,14 +57,14 @@ void Copter::land_gps_run()
     if (!motors->armed() || !ap.auto_armed || ap.land_complete || !motors->get_interlock()) {
 #if FRAME_CONFIG == HELI_FRAME  // Helicopters always stabilize roll/pitch/yaw
         // call attitude controller
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0/*, get_smoothing_gain()*/);
         attitude_control->set_throttle_out(0,false,g.throttle_filt);
 #else
         motors->set_desired_spool_state(AP_Motors::DESIRED_SPIN_WHEN_ARMED);
         // multicopters do not stabilize roll/pitch/yaw when disarmed
         attitude_control->set_throttle_out_unstabilized(0,true,g.throttle_filt);
 #endif
-        wp_nav->init_loiter_target();
+        loiter_nav->init_target();
 
         // disarm when the landing detector says we've landed
         if (ap.land_complete) {
@@ -106,7 +106,8 @@ void Copter::land_nogps_run()
             update_simple_mode();
 
             // get pilot desired lean angles
-            get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
+            get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+            //get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
         }
 
         // get pilot's desired yaw rate
@@ -117,7 +118,7 @@ void Copter::land_nogps_run()
     if (!motors->armed() || !ap.auto_armed || ap.land_complete || !motors->get_interlock()) {
 #if FRAME_CONFIG == HELI_FRAME  // Helicopters always stabilize roll/pitch/yaw
         // call attitude controller
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate/*, get_smoothing_gain()*/);
         attitude_control->set_throttle_out(0,false,g.throttle_filt);
 #else
         motors->set_desired_spool_state(AP_Motors::DESIRED_SPIN_WHEN_ARMED);
@@ -136,7 +137,7 @@ void Copter::land_nogps_run()
     motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
 
     // call attitude controller
-    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate, get_smoothing_gain());
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(target_roll, target_pitch, target_yaw_rate/*, get_smoothing_gain()*/);
 
     // pause before beginning land descent
     if(land_pause && millis()-land_start_time >= LAND_WITH_DELAY_MS) {
@@ -191,7 +192,7 @@ void Copter::land_run_vertical_control(bool pause_descent)
         max_land_descent_velocity = MIN(max_land_descent_velocity, -abs(g.land_speed));
 
         // Compute a vertical velocity demand such that the vehicle approaches LAND_START_ALT. Without the below constraint, this would cause the vehicle to hover at LAND_START_ALT.
-        cmb_rate = AC_AttitudeControl::sqrt_controller(LAND_START_ALT-alt_above_ground, g.p_alt_hold.kP(), pos_control->get_accel_z());
+        cmb_rate = AC_AttitudeControl::sqrt_controller(LAND_START_ALT-alt_above_ground, /*g.p_alt_hold.kP()*/pos_control->get_pos_z_p().kP(), pos_control->get_accel_z(), G_Dt);
 
         // Constrain the demanded vertical velocity so that it is between the configured maximum descent speed and the configured minimum descent speed.
         cmb_rate = constrain_float(cmb_rate, max_land_descent_velocity, -abs(g.land_speed));
@@ -210,12 +211,14 @@ void Copter::land_run_vertical_control(bool pause_descent)
 
 void Copter::land_run_horizontal_control()
 {
-    int16_t roll_control = 0, pitch_control = 0;
-    float target_yaw_rate = 0;
+    //int16_t roll_control = 0, pitch_control = 0;
+    float target_yaw_rate = 0.0f;
+    float target_roll = 0.0f;
+    float target_pitch = 0.0f;
     
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
-        wp_nav->loiter_soften_for_landing();
+        loiter_nav->soften_for_landing();
     }
     
     // process pilot inputs
@@ -232,12 +235,11 @@ void Copter::land_run_horizontal_control()
             // apply SIMPLE mode transform to pilot inputs
             update_simple_mode();
 
-            // process pilot's roll and pitch input
-            roll_control = channel_roll->get_control_in();
-            pitch_control = channel_pitch->get_control_in();
+            // convert pilot input to lean angles
+            get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max());
 
             // record if pilot has overriden roll or pitch
-            if (roll_control != 0 || pitch_control != 0) {
+            if (!is_zero(target_roll) || !is_zero(target_pitch)) {
                 ap.land_repo_active = true;
             }
         }
@@ -265,13 +267,13 @@ void Copter::land_run_horizontal_control()
 #endif
     
     // process roll, pitch inputs
-    wp_nav->set_pilot_desired_acceleration(roll_control, pitch_control);
+    loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch, G_Dt);
 
     // run loiter controller
-    wp_nav->update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+    loiter_nav->update(ekfGndSpdLimit, ekfNavVelGainScaler);
 
-    int32_t nav_roll  = wp_nav->get_roll();
-    int32_t nav_pitch = wp_nav->get_pitch();
+    int32_t nav_roll  = loiter_nav->get_roll();
+    int32_t nav_pitch = loiter_nav->get_pitch();
 
     if (g2.wp_navalt_min > 0) {
         // user has requested an altitude below which navigation
@@ -296,7 +298,7 @@ void Copter::land_run_horizontal_control()
 
     
     // call attitude controller
-    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(nav_roll, nav_pitch, target_yaw_rate, get_smoothing_gain());
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(nav_roll, nav_pitch, target_yaw_rate/*, get_smoothing_gain()*/);
 }
 
 // land_do_not_use_GPS - forces land-mode to not use the GPS but instead rely on pilot input for roll and pitch

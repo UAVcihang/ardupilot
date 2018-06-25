@@ -13,16 +13,19 @@ void Copter::arm_motors_check()
 {
     static int16_t arming_counter;
 
+    // 改成内八解锁 外八加锁
     // ensure throttle is down
-    if (channel_throttle->get_control_in() > 0) {
+    if (channel_throttle->get_control_in() > 0 && channel_pitch->get_control_in() < 4000) {
         arming_counter = 0;
         return;
     }
 
     int16_t tmp = channel_yaw->get_control_in();
+    int16_t tmp_roll = channel_roll->get_control_in();
 
     // full right
-    if (tmp > 4000) {
+    // 内八
+    if (tmp > 4000 && tmp_roll < -4000) {
 
         // increase the arming counter to a maximum of 1 beyond the auto trim counter
         if( arming_counter <= AUTO_TRIM_DELAY ) {
@@ -35,17 +38,22 @@ void Copter::arm_motors_check()
             if (!init_arm_motors(false)) {
                 arming_counter = 0;
             }
+
+            // 解锁手势未松开
+            arm_gesture_release = false;
         }
 
         // arm the motors and configure for flight
         if (arming_counter == AUTO_TRIM_DELAY && motors->armed() && control_mode == STABILIZE) {
             auto_trim_counter = 250;
             // ensure auto-disarm doesn't trigger immediately
+            // 自动加锁开始计算的时间
             auto_disarm_begin = millis();
         }
 
     // full left
-    }else if (tmp < -4000) {
+    // 外八
+    }else if (tmp < -4000 && tmp_roll > 4000) {
         if (!mode_has_manual_throttle(control_mode) && !ap.land_complete) {
             arming_counter = 0;
             return;
@@ -64,15 +72,22 @@ void Copter::arm_motors_check()
     // Yaw is centered so reset arming counter
     }else{
         arming_counter = 0;
+        arm_gesture_release = true;
     }
 }
 
 // auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode with throttle low for at least 15 seconds
+// called at 10hz
 void Copter::auto_disarm_check()
 {
     uint32_t tnow_ms = millis();
     uint32_t disarm_delay_ms = 1000*constrain_int16(g.disarm_delay, 0, 127);
 
+    // 如果飞机已经解锁，但解锁手势未松开，则退出
+    if(motors->armed() && !arm_gesture_release){
+    	auto_disarm_begin = tnow_ms;
+    	return;
+    }
     // exit immediately if we are already disarmed, or if auto
     // disarming is disabled
     if (!motors->armed() || disarm_delay_ms == 0 || control_mode == THROW) {
@@ -269,6 +284,7 @@ void Copter::init_disarm_motors()
 }
 
 // motors_output - send output to motors library which will adjust and send to ESCs and servos
+// fast loop called at 400hz
 void Copter::motors_output()
 {
 #if ADVANCED_FAILSAFE == ENABLED

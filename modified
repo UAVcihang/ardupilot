@@ -1,3 +1,4 @@
+Cihang-MG-V0.0.1
 1、修改flash大小 1008K ---> 2032K (nuttx-config/px4fmu-v2/scripts/ld.script)
 2、添加zigzag作业模式
 	-- 作业期间 方向舵不可控 油门可控高度
@@ -15,3 +16,22 @@
 因为mqtt库是C语言的，所以应该修改编译方式,把C文件添加进编译中（在mk/sketch_sources.mk,添加对c文件的编译）
 
 6、添加NRA24 毫米波雷达 接口
+
+
+Cihang-MG-V0.0.2
+1、移植3.6的new loiter 带刹车功能
+2、遥控器校磁，两个遥杆拉到最左下角，保持两秒进入校磁状态，灯变成紫色，水平转两圈后灯变成黄色 侧面朝下转两圈后灯变成蓝色 头朝下或上转两圈 校好后自动重启
+3、解锁方式改成内八，加锁改成外八
+4、config.h 文件 禁用了一些没有用到的功能
+5、内八解锁时，如果摇杆一直保持内八，超过一定时间，飞机会自动加锁，（这是一个bug）；添加变量arm_gesture_release，在自动加锁auto_disarm_check函数中判断，如果摇杆一直处于内八 则不会自动加锁；只有释放了内八，才会启动自动加锁检测。
+6、姿态内环PID 改成 ADRC ，要使用adrc算法需设置参数adrc_use = 1(默认为0) 还没有测试通过；通过设置LOG_Bitmask 的MASK_LOG_PID 使用 可以把pid或adrc的值写入log中，可在missionplanner查看
+
+
+mission planner 偶尔会出现bad gyro healthy 的错误， 这是飞控软件bug， 作者的回复：
+     I’m sure we will discuss more on the dev call tomorrow but it comes from timing jitter (i.e. all loops on copter are not running at exactly 400hz) which can lead to the occasional loop in which we don’t get a sample from the Pixhawk’s second gyro, the l3gd20.  We current mark a gyro as unhealthy if we don’t get a sample from it on every iteration so we need to figure out if we should do some of the following:
+
+1.       Change the criteria for a gyro being considered healthy (i.e. two iterations without a sample leads to an IMU being considred unhealthy?)
+
+2.       Change how we deal with the jitter.  Currently if we have a long loop (like 4ms), the next loop is made purposely short (just 1ms).   Instead of trying to make up for the long loop in the very next loop we could make the next few loops all fast.
+
+3.       Sort out the timing problems in copter so all loops runs closer to 400hz (i.e. 2.5ms)

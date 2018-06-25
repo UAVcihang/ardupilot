@@ -24,7 +24,7 @@
 *          18-12-2003
 *          06-06-2004
 *
-* © 2003, This code is provided "as is" and you can use it freely as long as
+* 2003, This code is provided "as is" and you can use it freely as long as
 * credit is given to Bill Perone in the application it is used in
 ****************************************/
 #pragma once
@@ -214,6 +214,15 @@ struct Vector2
         const Vector2<T> delta = closest - p;
         return delta.length();
     }
+
+    // find the intersection between two line segments
+    // returns true if they intersect, false if they do not
+    // the point of intersection is returned in the intersection argument
+    static bool segment_intersection(const Vector2<T>& seg1_start, const Vector2<T>& seg1_end, const Vector2<T>& seg2_start, const Vector2<T>& seg2_end, Vector2<T>& intersection);
+
+    // find the intersection between a line segment and a circle
+    // returns true if they intersect and intersection argument is updated with intersection closest to seg_start
+    static bool circle_segment_intersection(const Vector2<T>& seg_start, const Vector2<T>& seg_end, const Vector2<T>& circle_center, float radius, Vector2<T>& intersection);
 
 };
 

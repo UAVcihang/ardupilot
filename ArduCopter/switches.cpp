@@ -31,6 +31,7 @@ void Copter::read_multiaux_switches()
 	// calculate position of aux switch
 	int8_t switch_position;
 	uint16_t rc7_in = RC_Channels::rc_channel(CH_7)->get_radio_in();
+	uint16_t rc6_in = RC_Channels::rc_channel(CH_6)->get_radio_in();
     if      (rc7_in < 1131) switch_position = 0; // Initial, no input
     else if (rc7_in < 1261) switch_position = 1; // Pump on
     else if (rc7_in < 1391) switch_position = 2; // Pump off
@@ -65,7 +66,7 @@ void Copter::read_multiaux_switches()
         		return;
         	}
         	if(zigzag_record_point(true)) {
-        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A success");
+        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A point");
         		AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
         	}
 
@@ -76,7 +77,7 @@ void Copter::read_multiaux_switches()
         		return;
         	}
         	if(zigzag_record_point(false)) {
-        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B success");
+        		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B point");
         		AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
         	}
     		break;
@@ -85,6 +86,27 @@ void Copter::read_multiaux_switches()
     	aux_con.CH7_multi_flag = switch_position;
         // control_switch_state.last_edge_time_ms = tnow_ms;
     }
+
+    // exit immediately if the pump function has not been set-up for any servo
+    if (SRV_Channels::function_assigned(SRV_Channel::k_sprayer_pump) && (control_mode != ZIGZAG && control_mode != AUTO)) {
+    	SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_pump, rc6_in);
+    }
+}
+
+/**
+ * 读取5通道的状态判断是否要进行校磁
+ *   低---高---低---高---低---高---低
+ *   5通道来回切换3次进入校磁
+ * */
+void Copter::compass_cal_status(int8_t switch_position)
+{
+	// 如果已经解锁 或 正在校磁 直接退出
+	if(motors->armed() || ap.compass_calibration/*compass.is_calibrating()*/)
+	{
+		return;
+	}
+
+
 }
 
 void Copter::read_control_switch()
@@ -212,19 +234,25 @@ void Copter::read_aux_switches()
 
     /* Add by weihli
      * Test new rc radio */
-#if 0
+    if(g.radio_type !=0){
+
     read_multiaux_switches();
-#else
+    }
+
+    else {
     read_aux_switch(CH_7, aux_con.CH7_flag, g.ch7_option);
     read_aux_switch(CH_8, aux_con.CH8_flag, g.ch8_option);
     read_aux_switch(CH_9, aux_con.CH9_flag, g.ch9_option);
     read_aux_switch(CH_10, aux_con.CH10_flag, g.ch10_option);
     read_aux_switch(CH_11, aux_con.CH11_flag, g.ch11_option);
-#endif
+
+
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4 || CONFIG_HAL_BOARD == HAL_BOARD_VRBRAIN
     read_aux_switch(CH_12, aux_con.CH12_flag, g.ch12_option);
 #endif
+
+    }
 }
 
 #undef read_aux_switch
@@ -685,7 +713,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 		return;
                 	}
                 	if(zigzag_record_point(true)) {
-                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A success");
+                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record A point");
                 		AP_Notify::flags.zigzag_record = 16; // 2^4 = 16 means flash blue 4 seconds
                 	}
                     //init_arm_motors(false);
@@ -696,7 +724,7 @@ void Copter::do_aux_switch_function(int8_t ch_function, uint8_t ch_flag)
                 		return;
                 	}
                 	if(zigzag_record_point(false)) {
-                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B success");
+                		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Record B point");
                 		AP_Notify::flags.zigzag_record = 81; // 3^4 = 81 means flash yellow 4 seconds
                 	}
                     //init_disarm_motors();

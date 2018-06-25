@@ -30,6 +30,9 @@
 #define DEG_TO_RAD      (M_PI / 180.0f)
 #define RAD_TO_DEG      (180.0f / M_PI)
 
+// Centi-degrees to radians
+#define DEGX100 5729.57795f
+
 // GPS Specific double precision conversions
 // The precision here does matter when using the wsg* functions for converting
 // between LLH and ECEF coordinates.

@@ -74,6 +74,7 @@
 #include <AP_Vehicle/AP_Vehicle.h>         // needed for AHRS build
 #include <AP_InertialNav/AP_InertialNav.h>     // ArduPilot Mega inertial navigation library
 #include <AC_WPNav/AC_WPNav.h>           // ArduCopter waypoint navigation library
+#include <AC_WPNav/AC_Loiter.h>
 #include <AC_WPNav/AC_Circle.h>          // circle navigation library
 #include <AP_Declination/AP_Declination.h>     // ArduPilot Mega Declination Helper Library
 #include <AC_Fence/AC_Fence.h>           // Arducopter Fence library
@@ -133,6 +134,9 @@
 
 // MQTT 对接哈工大惠达能机平台
 #include <AC_MQTT/AC_MQTT.h>
+
+// 测试adrc
+#include <AC_ADRC/AC_ADRC.h>
 
 
 class Copter : public AP_HAL::HAL::Callbacks {
@@ -280,6 +284,7 @@ private:
             uint8_t motor_interlock_switch  : 1; // 23      // true if pilot is requesting motor interlock enable
             uint8_t in_arming_delay         : 1; // 24      // true while we are armed but waiting to spin motors
             uint8_t initialised_params      : 1; // 25      // true when the all parameters have been initialised. we cannot send parameters to the GCS until this is done
+            uint8_t compass_calibration     : 1; // 26      // 来回切换5通道3次则为true
         };
         uint32_t value;
     } ap;
@@ -380,9 +385,12 @@ private:
     AutoMode auto_mode;   // controls which auto controller is run
 
     // add by weihli for zigzag mode
+
     ZigzagMode zigzag_mode;
     ZigzagRCState zigzag_rc_state;
     bool          zigzag_auto_complete_state; // set to true if the copter arrived a/b position
+    bool          zigzag_change_yaw;
+    float zigzag_bearing;
     struct {
         bool a_hasbeen_defined;     //true if point A has been defined
         bool b_hasbeen_defined;     //true if point B has been defined
@@ -441,8 +449,8 @@ private:
     uint32_t loiter_time;                    // How long have we been loitering - The start time in millis
 
     // Brake
-    uint32_t brake_timeout_start;
-    uint32_t brake_timeout_ms;
+    /*uint32_t brake_timeout_start;
+    uint32_t brake_timeout_ms;*/
 
     // Delay the next navigation command
     int32_t nav_delay_time_max;  // used for delaying the navigation commands (eg land,takeoff etc.)
@@ -452,14 +460,14 @@ private:
     Vector3f flip_orig_attitude;         // original copter attitude before flip
 
     // throw mode state
-    struct {
+    /*struct {
         ThrowModeStage stage;
         ThrowModeStage prev_stage;
         uint32_t last_log_ms;
         bool nextmode_attempted;
         uint32_t free_fall_start_ms;    // system time free fall was detected
         float free_fall_start_velz;     // vertical velocity when free fall was detected
-    } throw_state = {Throw_Disarmed, Throw_Disarmed, 0, false, 0, 0.0f};
+    } throw_state = {Throw_Disarmed, Throw_Disarmed, 0, false, 0, 0.0f};*/
 
     // Battery Sensors
     AP_BattMonitor battery;
@@ -528,6 +536,7 @@ private:
     AC_AttitudeControl *attitude_control;
     AC_PosControl *pos_control;
     AC_WPNav *wp_nav;
+    AC_Loiter *loiter_nav;
     AC_Circle *circle_nav;
 
     // Performance monitoring
@@ -620,6 +629,9 @@ private:
     // true if we are out of time in our event timeslice
     bool gcs_out_of_time;
 
+    //解锁手势松开
+    bool arm_gesture_release;
+
     // last valid RC input time
     uint32_t last_radio_update_ms;
 
@@ -665,6 +677,11 @@ private:
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
 
+    // 获取最大下降速度
+    uint16_t get_pilot_speed_dn();
+
+    // 读取5通道的状态，判断是否要进行校磁
+    void compass_cal_status(int8_t switch_position);
     void compass_accumulate(void);
     void compass_cal_update(void);
     void barometer_accumulate(void);
@@ -697,8 +714,9 @@ private:
     void set_land_complete_maybe(bool b);
     void update_using_interlock();
     void set_motor_emergency_stop(bool b);
-    float get_smoothing_gain();
-    void get_pilot_desired_lean_angles(float roll_in, float pitch_in, float &roll_out, float &pitch_out, float angle_max);
+    //float get_smoothing_gain();
+    //void get_pilot_desired_lean_angles(float roll_in, float pitch_in, float &roll_out, float &pitch_out, float angle_max);
+    void get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit);
     float get_pilot_desired_yaw_rate(int16_t stick_angle);
     void check_ekf_reset();
     float get_roi_yaw();
@@ -771,10 +789,13 @@ private:
 #endif
     void Log_Write_Precland();
     void Log_Write_GuidedTarget(uint8_t target_type, const Vector3f& pos_target, const Vector3f& vel_target);
-    void Log_Write_Throw(ThrowModeStage stage, float velocity, float velocity_z, float accel, float ef_accel_z, bool throw_detect, bool attitude_ok, bool height_ok, bool position_ok);
+    //void Log_Write_Throw(ThrowModeStage stage, float velocity, float velocity_z, float accel, float ef_accel_z, bool throw_detect, bool attitude_ok, bool height_ok, bool position_ok);
     void Log_Write_Proximity();
     void Log_Write_Beacon();
     void Log_Write_Vehicle_Startup_Messages();
+    // adrc 数据写入log
+    void Log_Write_ADRC();
+
     void Log_Read(uint16_t log_num, uint16_t start_page, uint16_t end_page);
     void start_logging() ;
     void load_parameters(void);
@@ -809,9 +830,9 @@ private:
     void log_picture();
     MAV_RESULT mavlink_compassmot(mavlink_channel_t chan);
     void delay(uint32_t ms);
-    bool acro_init(bool ignore_checks);
-    void acro_run();
-    void get_pilot_desired_angle_rates(int16_t roll_in, int16_t pitch_in, int16_t yaw_in, float &roll_out, float &pitch_out, float &yaw_out);
+    //bool acro_init(bool ignore_checks);
+    //void acro_run();
+    //void get_pilot_desired_angle_rates(int16_t roll_in, int16_t pitch_in, int16_t yaw_in, float &roll_out, float &pitch_out, float &yaw_out);
     bool althold_init(bool ignore_checks);
     void althold_run();
     bool auto_init(bool ignore_checks);
@@ -876,16 +897,16 @@ private:
 #if ADVANCED_FAILSAFE == ENABLED
     void afs_fs_check(void);
 #endif
-    bool brake_init(bool ignore_checks);
+    /*bool brake_init(bool ignore_checks);
     void brake_run();
-    void brake_timeout_to_loiter_ms(uint32_t timeout_ms);
+    void brake_timeout_to_loiter_ms(uint32_t timeout_ms);*/
     bool circle_init(bool ignore_checks);
     void circle_run();
-    bool drift_init(bool ignore_checks);
-    void drift_run();
-    float get_throttle_assist(float velz, float pilot_throttle_scaled);
-    bool flip_init(bool ignore_checks);
-    void flip_run();
+    //bool drift_init(bool ignore_checks);
+    //void drift_run();
+    //float get_throttle_assist(float velz, float pilot_throttle_scaled);
+    //bool flip_init(bool ignore_checks);
+    //void flip_run();
     bool guided_init(bool ignore_checks);
     bool guided_takeoff_start(float final_alt_above_home);
     void guided_pos_control_start();
@@ -939,6 +960,10 @@ private:
     void zigzag_save(void);
     void zigzag_load(void);
 
+    // poshold_vel mode
+    bool position_init(bool ignore_checks);
+    void position_run();
+
 #if PRECISION_LANDING == ENABLED
     bool do_precision_loiter();
     void precision_loiter_xy();
@@ -956,12 +981,12 @@ private:
     void poshold_pitch_controller_to_pilot_override();
 
     // Throw to launch functionality
-    bool throw_init(bool ignore_checks);
+    /*bool throw_init(bool ignore_checks);
     void throw_run();
     bool throw_detected();
     bool throw_attitude_good();
     bool throw_height_good();
-    bool throw_position_good();
+    bool throw_position_good();*/
 
     bool rtl_init(bool ignore_checks);
     void rtl_restart_without_terrain();
@@ -977,8 +1002,8 @@ private:
     void rtl_land_run();
     void rtl_build_path(bool terrain_following_allowed);
     void rtl_compute_return_target(bool terrain_following_allowed);
-    bool sport_init(bool ignore_checks);
-    void sport_run();
+    //bool sport_init(bool ignore_checks);
+    //void sport_run();
     bool stabilize_init(bool ignore_checks);
     void stabilize_run();
     void crash_check();
@@ -1024,15 +1049,15 @@ private:
     bool mode_has_manual_throttle(control_mode_t mode);
     bool mode_allows_arming(control_mode_t mode, bool arming_from_gcs);
     void notify_flight_mode(control_mode_t mode);
-    void heli_init();
-    void check_dynamic_flight(void);
-    void update_heli_control_dynamics(void);
-    void heli_update_landing_swash();
-    void heli_update_rotor_speed_targets();
-    bool heli_acro_init(bool ignore_checks);
-    void heli_acro_run();
-    bool heli_stabilize_init(bool ignore_checks);
-    void heli_stabilize_run();
+    //void heli_init();
+    //void check_dynamic_flight(void);
+    //void update_heli_control_dynamics(void);
+    //void heli_update_landing_swash();
+    //void heli_update_rotor_speed_targets();
+    //bool heli_acro_init(bool ignore_checks);
+    //void heli_acro_run();
+    //bool heli_stabilize_init(bool ignore_checks);
+    //void heli_stabilize_run();
     void read_inertia();
     bool land_complete_maybe();
     void update_land_and_crash_detectors();

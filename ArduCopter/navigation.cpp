@@ -26,9 +26,13 @@ void Copter::calc_wp_distance()
     // get target from loiter or wpinav controller
     switch (control_mode) {
     case LOITER:
-    case CIRCLE:
-        wp_distance = wp_nav->get_loiter_distance_to_target();
+    //case CIRCLE:
+        wp_distance = loiter_nav->get_distance_to_target();
         break;
+
+    case CIRCLE:
+    	wp_distance = circle_nav->get_distance_to_target();
+    	break;
 
     case AUTO:
     case RTL:
@@ -37,9 +41,13 @@ void Copter::calc_wp_distance()
 
     case GUIDED:
         if (guided_mode == Guided_WP) {
-            wp_distance = wp_nav->get_wp_distance_to_destination();
-            break;
+            wp_bearing = wp_nav->get_wp_distance_to_destination();
+            //break;
         }
+        else if(guided_mode == Guided_PosVel) {
+        	wp_bearing = pos_control->get_distance_to_target();
+        }
+        break;
         // no break
     default:
         wp_distance = 0;
@@ -53,9 +61,13 @@ void Copter::calc_wp_bearing()
     // get target from loiter or wpinav controller
     switch (control_mode) {
     case LOITER:
-    case CIRCLE:
-        wp_bearing = wp_nav->get_loiter_bearing_to_target();
+    //case CIRCLE:
+        wp_bearing = loiter_nav->get_bearing_to_target();
         break;
+
+    case CIRCLE:
+    	wp_bearing = circle_nav->get_bearing_to_target();
+    	break;
 
     case AUTO:
     case RTL:
@@ -65,8 +77,12 @@ void Copter::calc_wp_bearing()
     case GUIDED:
         if (guided_mode == Guided_WP) {
             wp_bearing = wp_nav->get_wp_bearing_to_destination();
-            break;
+            //break;
         }
+        else if(guided_mode == Guided_PosVel) {
+        	wp_bearing = pos_control->get_bearing_to_target();
+        }
+        break;
         // no break
     default:
         wp_bearing = 0;

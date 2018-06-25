@@ -24,6 +24,7 @@ class AP_Beacon_Backend;
 
 #define AP_BEACON_MAX_BEACONS 4
 #define AP_BEACON_TIMEOUT_MS 300
+#define AP_BEACON_MINIMUM_FENCE_BEACONS 3
 
 class AP_Beacon
 {
@@ -90,12 +91,26 @@ public:
     // return last update time from beacon in milliseconds
     uint32_t beacon_last_update_ms(uint8_t beacon_instance) const;
 
+    // update fence boundary array
+    void update_boundary_points();
+
+    // return fence boundary array
+    const Vector2f* get_boundary_points(uint16_t& num_points) const;
+
     static const struct AP_Param::GroupInfo var_info[];
 
 private:
 
     // check if device is ready
     bool device_ready(void) const;
+
+    // find next boundary point from an array of boundary points given the current index into that array
+    // returns true if a next point can be found
+    //   current_index should be an index into the boundary_pts array
+    //   start_angle is an angle (in radians), the search will sweep clockwise from this angle
+    //   the index of the next point is returned in the next_index argument
+    //   the angle to the next point is returned in the next_angle argument
+    static bool get_next_boundary_point(const Vector2f* boundary, uint8_t num_points, uint8_t current_index, float start_angle, uint8_t& next_index, float& next_angle);
 
     // parameters
     AP_Int8 _type;
@@ -116,4 +131,9 @@ private:
     // individual beacon data
     uint8_t num_beacons = 0;
     BeaconState beacon_state[AP_BEACON_MAX_BEACONS];
+
+    // fence boundary
+    Vector2f boundary[AP_BEACON_MAX_BEACONS+1]; // array of boundary points (used for fence)
+    uint8_t boundary_num_points;                // number of points in boundary
+    uint8_t boundary_num_beacons;               // total number of beacon points consumed while building boundary
 };

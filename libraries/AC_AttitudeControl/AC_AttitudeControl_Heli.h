@@ -22,6 +22,7 @@
 #define AC_ATC_HELI_RATE_YAW_FF                     0.024f
 #define AC_ATC_HELI_RATE_YAW_FILT_HZ                20.0f
 
+#define AC_ATTITUDE_HELI_ANGLE_LIMIT_THROTTLE_MAX   0.95f    // Heli's use 95% of max collective before limiting frame angle
 #define AC_ATTITUDE_HELI_RATE_INTEGRATOR_LEAK_RATE  0.02f
 #define AC_ATTITUDE_HELI_RATE_RP_FF_FILTER          10.0f
 #define AC_ATTITUDE_HELI_RATE_Y_VFF_FILTER          10.0f
@@ -39,6 +40,9 @@ public:
         _pid_rate_roll(AC_ATC_HELI_RATE_RP_P, AC_ATC_HELI_RATE_RP_I, AC_ATC_HELI_RATE_RP_D, AC_ATC_HELI_RATE_RP_IMAX, AC_ATC_HELI_RATE_RP_FILT_HZ, dt, AC_ATC_HELI_RATE_RP_FF),
         _pid_rate_pitch(AC_ATC_HELI_RATE_RP_P, AC_ATC_HELI_RATE_RP_I, AC_ATC_HELI_RATE_RP_D, AC_ATC_HELI_RATE_RP_IMAX, AC_ATC_HELI_RATE_RP_FILT_HZ, dt, AC_ATC_HELI_RATE_RP_FF),
         _pid_rate_yaw(AC_ATC_HELI_RATE_YAW_P, AC_ATC_HELI_RATE_YAW_I, AC_ATC_HELI_RATE_YAW_D, AC_ATC_HELI_RATE_YAW_IMAX, AC_ATC_HELI_RATE_YAW_FILT_HZ, dt, AC_ATC_HELI_RATE_YAW_FF),
+        _adrc_rate_roll(dt, 0.135f, 0.0036),
+        _adrc_rate_pitch(dt, 0.135f, 0.0036),
+        _adrc_rate_yaw(dt, 0.18f, 0.0036),
         pitch_feedforward_filter(AC_ATTITUDE_HELI_RATE_RP_FF_FILTER),
         roll_feedforward_filter(AC_ATTITUDE_HELI_RATE_RP_FF_FILTER),
         yaw_velocity_feedforward_filter(AC_ATTITUDE_HELI_RATE_Y_VFF_FILTER)
@@ -60,6 +64,17 @@ public:
     AC_PID& get_rate_pitch_pid() { return _pid_rate_pitch; }
     AC_PID& get_rate_yaw_pid() { return _pid_rate_yaw; }
 
+    // ADRC accessors
+    AC_ADRC& get_rate_roll_adrc() { return _adrc_rate_roll; }
+    AC_ADRC& get_rate_pitch_adrc() { return _adrc_rate_pitch; }
+    AC_ADRC& get_rate_yaw_adrc() { return _adrc_rate_yaw; }
+
+	void set_rate_adrc() {
+	}
+
+	bool use_adrc() {
+		return false;
+	}
     // passthrough_bf_roll_pitch_rate_yaw - roll and pitch are passed through directly, body-frame rate target for yaw
     void passthrough_bf_roll_pitch_rate_yaw(float roll_passthrough, float pitch_passthrough, float yaw_rate_bf_cds) override;
 
@@ -95,6 +110,17 @@ public:
     // Set output throttle
     void set_throttle_out(float throttle_in, bool apply_angle_boost, float filt_cutoff) override;
 
+    // Command an euler roll and pitch angle and an euler yaw rate with angular velocity feedforward and smoothing
+    void input_euler_angle_roll_pitch_euler_rate_yaw(float euler_roll_angle_cd, float euler_pitch_angle_cd, float euler_yaw_rate_cds) override;
+
+    // Command an euler roll, pitch and yaw angle with angular velocity feedforward and smoothing
+    void input_euler_angle_roll_pitch_yaw(float euler_roll_angle_cd, float euler_pitch_angle_cd, float euler_yaw_angle_cd, bool slew_yaw) override;
+    
+    // enable/disable inverted flight
+    void set_inverted_flight(bool inverted) override {
+        _inverted_flight = inverted;
+    }
+    
     // user settable parameters
     static const struct AP_Param::GroupInfo var_info[];
 
@@ -149,6 +175,11 @@ private:
     AC_HELI_PID     _pid_rate_pitch;
     AC_HELI_PID     _pid_rate_yaw;
     
+    // add by weihli, for test adrc
+    AC_ADRC            _adrc_rate_roll;
+	AC_ADRC            _adrc_rate_pitch;
+	AC_ADRC            _adrc_rate_yaw;
+
     // LPF filters to act on Rate Feedforward terms to linearize output.
     // Due to complicated aerodynamic effects, feedforwards acting too fast can lead
     // to jerks on rate change requests.

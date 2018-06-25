@@ -2109,6 +2109,24 @@ void DataFlash_Class::Log_Write_PID(uint8_t msg_type, const PID_Info &info)
     WriteBlock(&pkt, sizeof(pkt));
 }
 
+// write adrc packet
+void DataFlash_Class::Log_Write_ADRC(uint8_t msg_type, AC_ADRC &adrc_rate)
+{
+	struct log_ADRC pkt = {
+		LOG_PACKET_HEADER_INIT(msg_type),
+		time_us         : AP_HAL::micros64(),
+		x1              : adrc_rate.get_x1(),
+		x2              : adrc_rate.get_x2(),
+		z1              : adrc_rate.get_z1(),
+		z2              : adrc_rate.get_z2(),
+		z3              : adrc_rate.get_z3(),
+		e1              : adrc_rate.get_e1(),
+		e2              : adrc_rate.get_e2()
+	};
+
+	WriteBlock(&pkt, sizeof(pkt));
+}
+
 void DataFlash_Class::Log_Write_Origin(uint8_t origin_type, const Location &loc)
 {
     uint64_t time_us = AP_HAL::micros64();

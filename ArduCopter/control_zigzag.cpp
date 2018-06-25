@@ -20,9 +20,11 @@ bool Copter::zigzag_init(bool ignore_checks)
 
         //zigzag_auto_complete_state = false;
         // initialise waypoint state
+    	zigzag_change_yaw = false;
         if(zigzag_waypoint_state.b_hasbeen_defined || zigzag_waypoint_state.bp_mode != Zigzag_None) {
 
-        	
+        	//get_bearing_cd(_APoint, _BPoint) * 0.01f;
+        	zigzag_bearing = get_bearing_cd(zigzag_waypoint_state.a_pos, zigzag_waypoint_state.b_pos);
         	zigzag_mode = Zigzag_Auto;
         	zigzag_auto_complete_state = (zigzag_waypoint_state.bp_mode != Zigzag_None);
 
@@ -57,16 +59,16 @@ bool Copter::zigzag_init(bool ignore_checks)
         	zigzag_mode = Zigzag_Manual;
         	zigzag_auto_complete_state = false;
 
-#if 0
+#if 1
             // initialize's loiter position and velocity on xy-axes from current pos and velocity
-            wp_nav->init_loiter_target();
+            loiter_nav->init_target();
 
             // initialize vertical speed and acceleration's range
             //pos_control->set_speed_z(-g.k_param_pilot_speed_up, g.k_param_pilot_speed_up);
             // the parameters are maximum climb and descent rates
             //pos_control->set_accel_z(g.pilot_accel_z);
-            pos_control->set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
-            pos_control->set_accel_z(g.pilot_accel_z);
+            //pos_control->set_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
+            //pos_control->set_accel_z(g.pilot_accel_z);
 
             // Global parameters are all contained within the 'g' class.
             // Parameters g;
@@ -84,7 +86,19 @@ bool Copter::zigzag_init(bool ignore_checks)
 
         //hal.console->printf("zigzag mode init");
         //delay(2000);
-        zigzag_rc_state = RC_MID;
+		switch(zigzag_waypoint_state.direct) {
+
+			case 1:
+				zigzag_rc_state = RC_LEFT;
+				break;
+			case -1:
+				zigzag_rc_state = RC_RIGHT;
+				break;
+			case 0:
+			default:
+				zigzag_rc_state = RC_MID;
+				break;
+		}
         // zigzag_waypoint_state.width = 500;
         //zigzag_waypoint_state.index = 0;
         /*zigzag_waypoint_state.A_hasbeen_defined = false;
@@ -107,17 +121,17 @@ void Copter::zigzag_run()
     if (!motors->armed() || !ap.auto_armed || !motors->get_interlock() || ap.land_complete) {
 #if FRAME_CONFIG == HELI_FRAME  // Helicopters always stabilize roll/pitch/yaw
         // call attitude controller
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(0, 0, 0/*, get_smoothing_gain()*/);
         attitude_control->set_throttle_out(0, false, g.throttle_filt);
 #else
         motors->set_desired_spool_state(AP_Motors::DESIRED_SHUT_DOWN);
-        wp_nav->init_loiter_target();
+        loiter_nav->init_target();
         attitude_control->reset_rate_controller_I_terms();
         attitude_control->set_yaw_target_to_current_heading();
         pos_control->relax_alt_hold_controllers(0.0f);   // forces throttle output to go to zero
 
-        wp_nav->update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), 0, get_smoothing_gain());
+        loiter_nav->update(ekfGndSpdLimit, ekfNavVelGainScaler);
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(loiter_nav->get_roll(), loiter_nav->get_pitch(), 0/*, get_smoothing_gain()*/);
         pos_control->update_z_controller();
         // multicopters do not stabilize roll/pitch/yaw when disarmed
         // attitude_control->set_throttle_out_unstabilized(0, true, g.throttle_filt);
@@ -131,7 +145,7 @@ void Copter::zigzag_run()
     case Zigzag_Manual:
         // receive pilot's inputs, do position and attitude control
     	//GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Zigzag manual");
-#if 0
+#if 1
         zigzag_manual_control();
 #else
         poshold_run();
@@ -139,7 +153,7 @@ void Copter::zigzag_run()
     	break;
 
     case Zigzag_Auto:
-    	if(zigzag_auto_complete_state/* && zigzag_waypoint_state.action*/){
+    	if(zigzag_auto_complete_state && !zigzag_change_yaw/* && zigzag_waypoint_state.action*/){
     		//Vector3f next_dest;
     		//Location_Class next_dest;
 
@@ -166,38 +180,42 @@ void Copter::zigzag_manual_control()
 {
     float target_yaw_rate = 0.0f;
     float target_climb_rate = 0.0f;
+    float target_roll = 0.0f;
+    float target_pitch = 0.0f;
 
     // initialize vertical speed and acceleration's range
-    pos_control->set_speed_z(-g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+    pos_control->set_speed_z(-get_pilot_speed_dn(), g.pilot_speed_up);
     pos_control->set_accel_z(g.pilot_accel_z);
     // process pilot inputs unless we are in radio failsafe
     if (!failsafe.radio) {
         // apply SIMPLE mode transform to pilot inputs
         update_simple_mode();
+        // convert pilot input to lean angles
+        get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max());
         // process pilot's roll and pitch input
-        wp_nav->set_pilot_desired_acceleration(channel_roll->get_control_in(), channel_pitch->get_control_in());
+        loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch, G_Dt);
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
         //make sure the climb rate is in the given range, prevent floating point errors
-        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
     }
     else {
         // clear out pilot desired acceleration in case radio failsafe event occurs and we
         //do not switch to RTL for some reason
-        wp_nav->clear_pilot_desired_acceleration();
+    	loiter_nav->clear_pilot_desired_acceleration();
     }
 
     // set motors to full range
     motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
     // run loiter controller
-    wp_nav->update_loiter(ekfGndSpdLimit, ekfNavVelGainScaler);
+    loiter_nav->update(ekfGndSpdLimit, ekfNavVelGainScaler);
 
     // call attitude controller
-    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(),
-            wp_nav->get_pitch(), target_yaw_rate, get_smoothing_gain());
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(loiter_nav->get_roll(),
+    		loiter_nav->get_pitch(), target_yaw_rate/*, get_smoothing_gain()*/);
 
     // adjust climb rate using rangefinder
     if (rangefinder_alt_ok()) {
@@ -239,7 +257,8 @@ void Copter::zigzag_auto_control()
     //pos_control->set_accel_z(g.pilot_accel_z);
     if (!failsafe.radio) {
         // To-Do: convert get_pilot_desired_lean_angles to return angles as floats
-        get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
+    	get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+        //get_pilot_desired_lean_angles(channel_roll->get_control_in(), channel_pitch->get_control_in(), target_roll, target_pitch, aparm.angle_max);
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
         if (!is_zero(target_yaw_rate)) {
@@ -248,7 +267,7 @@ void Copter::zigzag_auto_control()
 
         // get pilot desired climb rate
         target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
-        target_climb_rate = constrain_float(target_climb_rate, -g.pilot_velocity_z_max, g.pilot_velocity_z_max);
+        target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
     }
 
 
@@ -289,8 +308,8 @@ void Copter::zigzag_auto_control()
     else if(!is_zero(target_roll) || !is_zero(target_pitch) /*|| !is_zero(target_yaw_rate)*/){
     	zigzag_mode = Zigzag_Manual;
     	zigzag_auto_complete_state = false;
-#if 0
-        wp_nav->init_loiter_target();
+#if 1
+        loiter_nav->init_target();
 #else
         poshold_init(true);
 #endif
@@ -322,23 +341,35 @@ void Copter::zigzag_auto_control()
     // call attitude controller
     if (auto_yaw_mode == AUTO_YAW_HOLD) {
         // roll & pitch from waypoint controller, yaw rate from pilot
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), /*target_yaw_rate*/0, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), /*target_yaw_rate*/0/*, get_smoothing_gain()*/);
     }
     else if (auto_yaw_mode == AUTO_YAW_RATE) {
         // roll & pitch from waypoint controller, yaw rate from mavlink command or mission item
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_yaw_rate_cds(), get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_yaw_rate_cds()/*, get_smoothing_gain()*/);
     }
     else {
         // roll, pitch from waypoint controller, yaw heading from GCS or auto_heading()
-        attitude_control->input_euler_angle_roll_pitch_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_heading(), true, get_smoothing_gain());
+        attitude_control->input_euler_angle_roll_pitch_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_heading(), true/*, get_smoothing_gain()*/);
     }
 
     if(zigzag_waypoint_state.direct != 0 && ((zigzag_waypoint_state.flag & 0x05) == 0x05)) {
     zigzag_auto_complete_state = wp_nav->reached_wp_destination();
+    if(zigzag_change_yaw && verify_yaw()) {
+    	//verify_yaw();
+    	zigzag_change_yaw = false;
+    }
     if(zigzag_auto_complete_state && zigzag_waypoint_state.bp_mode != Zigzag_None){
+    	zigzag_change_yaw = true;
+    	set_auto_yaw_mode(AUTO_YAW_LOOK_AT_HEADING);
+    	/*set_auto_yaw_look_at_heading(zigzag_bearing,
+    			cmd.content.yaw.turn_rate_dps,
+    			cmd.content.yaw.direction,
+    			cmd.content.yaw.relative_angle > 0);*/
+    	yaw_look_at_heading = zigzag_bearing;
 		zigzag_waypoint_state.bp_mode = Zigzag_None;
 		zigzag_waypoint_state.index--;
     }
+
 	}
 }
 

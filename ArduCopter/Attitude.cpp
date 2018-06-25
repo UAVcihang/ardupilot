@@ -2,14 +2,14 @@
 
 // get_smoothing_gain - returns smoothing gain to be passed into attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw
 //      result is a number from 2 to 12 with 2 being very sluggish and 12 being very crisp
-float Copter::get_smoothing_gain()
+/*float Copter::get_smoothing_gain()
 {
     return (2.0f + (float)g.rc_feel_rp/10.0f);
-}
+}*/
 
 // get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
 // returns desired angle in centi-degrees
-void Copter::get_pilot_desired_lean_angles(float roll_in, float pitch_in, float &roll_out, float &pitch_out, float angle_max)
+/*void Copter::get_pilot_desired_lean_angles(float roll_in, float pitch_in, float &roll_out, float &pitch_out, float angle_max)
 {
     // sanity check angle max parameter
     aparm.angle_max = constrain_int16(aparm.angle_max,1000,8000);
@@ -36,6 +36,36 @@ void Copter::get_pilot_desired_lean_angles(float roll_in, float pitch_in, float 
     // return
     roll_out = roll_in;
     pitch_out = pitch_in;
+}*/
+
+// get_pilot_desired_angle - transform pilot's roll or pitch input into a desired lean angle
+// returns desired angle in centi-degrees
+void Copter::get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit)
+{
+    // fetch roll and pitch inputs
+    roll_out = channel_roll->get_control_in();
+    pitch_out = channel_pitch->get_control_in();
+
+	// limit max lean angle
+    angle_limit = constrain_float(angle_limit, 1000.0f, angle_max);
+
+    // scale roll and pitch inputs to ANGLE_MAX parameter range
+    float scaler = angle_max/(float)ROLL_PITCH_YAW_INPUT_MAX;
+    roll_out *= scaler;
+    pitch_out *= scaler;
+
+    // do circular limit
+    float total_in = norm(pitch_out, roll_out);
+    if (total_in > angle_limit) {
+        float ratio = angle_limit / total_in;
+        roll_out *= ratio;
+        pitch_out *= ratio;
+    }
+
+    // do lateral tilt to euler roll conversion
+    roll_out = (18000/M_PI) * atanf(cosf(pitch_out*(M_PI/18000))*tanf(roll_out*(M_PI/18000)));
+
+    // roll_out and pitch_out are returned
 }
 
 // get_pilot_desired_heading - transform pilot's yaw input into a
@@ -200,10 +230,10 @@ float Copter::get_pilot_desired_climb_rate(float throttle_control)
     // check throttle is above, below or in the deadband
     if (throttle_control < deadband_bottom) {
         // below the deadband
-        desired_rate = g.pilot_velocity_z_max * (throttle_control-deadband_bottom) / deadband_bottom;
+        desired_rate = get_pilot_speed_dn() * (throttle_control-deadband_bottom) / deadband_bottom;
     }else if (throttle_control > deadband_top) {
         // above the deadband
-        desired_rate = g.pilot_velocity_z_max * (throttle_control-deadband_top) / (1000.0f-deadband_top);
+        desired_rate = g.pilot_speed_up * (throttle_control-deadband_top) / (1000.0f-deadband_top);
     }else{
         // must be in the deadband
         desired_rate = 0.0f;
@@ -283,7 +313,7 @@ float Copter::get_surface_tracking_climb_rate(int16_t target_rate, float current
 float Copter::get_avoidance_adjusted_climbrate(float target_rate)
 {
 #if AC_AVOID_ENABLED == ENABLED
-    avoid.adjust_velocity_z(pos_control->get_pos_z_kP(), pos_control->get_accel_z(), target_rate);
+    avoid.adjust_velocity_z(pos_control->get_pos_z_p().kP(), pos_control->get_accel_z(), target_rate, G_Dt);
     return target_rate;
 #else
     return target_rate;
@@ -296,7 +326,8 @@ void Copter::set_accel_throttle_I_from_pilot_throttle()
     // get last throttle input sent to attitude controller
     float pilot_throttle = constrain_float(attitude_control->get_throttle_in(), 0.0f, 1.0f);
     // shift difference between pilot's throttle and hover throttle into accelerometer I
-    g.pid_accel_z.set_integrator((pilot_throttle-motors->get_throttle_hover()) * 1000.0f);
+    //g.pid_accel_z.set_integrator((pilot_throttle-motors->get_throttle_hover()) * 1000.0f);
+    pos_control->get_accel_z_pid().set_integrator((pilot_throttle-motors->get_throttle_hover()) * 1000.0f);
 }
 
 // rotate vector from vehicle's perspective to North-East frame
@@ -306,4 +337,15 @@ void Copter::rotate_body_frame_to_NE(float &x, float &y)
     float ne_y = x*ahrs.sin_yaw() + y*ahrs.cos_yaw();
     x = ne_x;
     y = ne_y;
+}
+
+// It will return the PILOT_SPEED_DN value if non zero, otherwise if zero it returns the PILOT_SPEED_UP value.
+uint16_t Copter::get_pilot_speed_dn()
+{
+    if (g2.pilot_speed_dn == 0) {
+        return abs(g.pilot_speed_up);
+    } else {
+        return abs(g2.pilot_speed_dn);
+    }
+	//return abs(g.pilot_velocity_z_max);
 }

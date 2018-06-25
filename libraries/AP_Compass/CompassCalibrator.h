@@ -34,7 +34,7 @@ public:
 
     void set_tolerance(float tolerance) { _tolerance = tolerance; }
 
-    void get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals);
+    void get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals, bool force = false);
 
     float get_completion_percent() const;
     completion_mask_t& get_completion_mask();

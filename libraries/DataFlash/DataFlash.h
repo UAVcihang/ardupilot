@@ -21,6 +21,7 @@
 #include <AP_Motors/AP_Motors.h>
 #include <AP_Rally/AP_Rally.h>
 #include <AP_Beacon/AP_Beacon.h>
+#include <AC_ADRC/AC_ADRC.h>
 #include <stdint.h>
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
@@ -49,8 +50,10 @@ class DataFlash_Class
 public:
     FUNCTOR_TYPEDEF(print_mode_fn, void, AP_HAL::BetterStream*, uint8_t);
     FUNCTOR_TYPEDEF(vehicle_startup_message_Log_Writer, void);
-    DataFlash_Class(const char *firmware_string) :
-        _firmware_string(firmware_string)
+    DataFlash_Class(const char *firmware_string, const AP_Int32 &log_bitmask) :
+        _firmware_string(firmware_string),
+        _log_bitmask(log_bitmask),
+        _in_log_download(false)
         {
             AP_Param::setup_object_defaults(this, var_info);
             if (_instance != nullptr) {
@@ -117,6 +120,18 @@ public:
     void Log_Write_RFND(const RangeFinder &rangefinder);
     void Log_Write_IMU(const AP_InertialSensor &ins);
     void Log_Write_IMUDT(const AP_InertialSensor &ins, uint64_t time_us, uint8_t imu_mask);
+    /*bool Log_Write_ISBH(uint16_t seqno,
+                        AP_InertialSensor::IMU_SENSOR_TYPE sensor_type,
+                        uint8_t instance,
+                        uint16_t multiplier,
+                        uint16_t sample_count,
+                        uint64_t sample_us,
+                        float sample_rate_hz);
+    bool Log_Write_ISBD(uint16_t isb_seqno,
+                        uint16_t seqno,
+                        const int16_t x[32],
+                        const int16_t y[32],
+                        const int16_t z[32]);*/
     void Log_Write_Vibration(const AP_InertialSensor &ins);
     void Log_Write_RCIN(void);
     void Log_Write_RCOUT(void);
@@ -171,6 +186,12 @@ public:
 
     void Log_Write_PID(uint8_t msg_type, const PID_Info &info);
 
+    // write adrc packet
+    void Log_Write_ADRC(uint8_t msg_type, AC_ADRC &adrc_rate);
+
+    // returns true if logging of a message should be attempted
+    bool should_log(uint32_t mask) const; // from copter3.6-rc2
+
     bool logging_started(void);
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL || CONFIG_HAL_BOARD == HAL_BOARD_LINUX
@@ -216,6 +237,11 @@ public:
     void set_vehicle_armed(bool armed_state);
     bool vehicle_is_armed() const { return _armed; }
 
+    bool get_in_log_download() const { return _in_log_download; }
+    void set_in_log_download(bool in_log_download);/* {
+    	_in_log_download = in_log_download;
+    }*/
+
 protected:
 
     const struct LogStructure *_structures;
@@ -232,6 +258,7 @@ private:
     uint8_t _next_backend;
     DataFlash_Backend *backends[DATAFLASH_MAX_BACKENDS];
     const char *_firmware_string;
+    const AP_Int32 &_log_bitmask; // from copter3.6-rc2
 
     void internal_error() const;
 
@@ -286,4 +313,7 @@ private:
     void dump_structures(const struct LogStructure *structures, const uint8_t num_types);
 
     void Log_Write_EKF_Timing(const char *name, uint64_t time_us, const struct ekf_timing &timing);
+
+    // bolean replicating old vehicle in_log_download flag:
+    bool _in_log_download:1; // from copter3.6-rc2
 };

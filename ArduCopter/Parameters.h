@@ -98,7 +98,7 @@ public:
         k_param_throttle_accel_enabled,     // deprecated - remove
         k_param_wp_yaw_behavior,
         k_param_acro_trainer,
-        k_param_pilot_velocity_z_max,
+        k_param_pilot_speed_up,
         k_param_circle_rate,                // deprecated - remove
         k_param_rangefinder_gain,
         k_param_ch8_option,
@@ -196,6 +196,7 @@ public:
         k_param_attitude_control,
         k_param_pos_control,
         k_param_circle_nav,     // 104
+        k_param_loiter_nav,     // 105
 
         // 110: Telemetry control
         //
@@ -316,6 +317,7 @@ public:
 
         // add by weihli
         // 208: AB point record time
+        k_param_radio_type = 207,
         k_param_Zigzag_time = 208,
         k_param_Zigzag_width = 209,
 
@@ -412,7 +414,7 @@ public:
     AP_Int16        rtl_climb_min;              // rtl minimum climb in cm
 
     AP_Int8         wp_yaw_behavior;            // controls how the autopilot controls yaw during missions
-    AP_Int8         rc_feel_rp;                 // controls vehicle response to user input with 0 being extremely soft and 100 begin extremely crisp
+    //AP_Int8         rc_feel_rp;                 // controls vehicle response to user input with 0 being extremely soft and 100 begin extremely crisp
 
     AP_Int16        poshold_brake_rate;         // PosHold flight mode's rotation rate during braking in deg/sec
     AP_Int16        poshold_brake_angle_max;    // PosHold flight mode's max lean angle during braking in centi-degrees
@@ -422,7 +424,7 @@ public:
     AP_Int32        rtl_loiter_time;
     AP_Int16        land_speed;
     AP_Int16        land_speed_high;
-    AP_Int16        pilot_velocity_z_max;        // maximum vertical velocity the pilot may request
+    AP_Int16        pilot_speed_up;        // rename pilot_speed_up  maximum vertical velocity the pilot may request
     AP_Int16        pilot_accel_z;               // vertical acceleration the pilot may request
 
     // Throttle
@@ -477,13 +479,13 @@ public:
     AP_Float                acro_rp_expo;
 
     // PI/D controllers
-    AC_PI_2D                pi_vel_xy;
+    /*AC_PI_2D                pi_vel_xy;
 
     AC_P                    p_vel_z;
     AC_PID                  pid_accel_z;
 
     AC_P                    p_pos_xy;
-    AC_P                    p_alt_hold;
+    AC_P                    p_alt_hold;*/
 
     // Autotune
     AP_Int8                 autotune_axis_bitmask;
@@ -492,10 +494,11 @@ public:
 
     AP_Int32                Zigzag_time;
     AP_Int8                 Zigzag_width;
+    AP_Int8                 radio_type;
 
     // Note: keep initializers here in the same order as they are declared
     // above.
-    Parameters() :
+    /*Parameters() :
         // PID controller	    initial P	      initial I         initial D       initial imax        initial filt hz     pid rate
         //---------------------------------------------------------------------------------------------------------------------------------
         pi_vel_xy               (VEL_XY_P,        VEL_XY_I,                         VEL_XY_IMAX,        VEL_XY_FILT_HZ,     WPNAV_LOITER_UPDATE_TIME),
@@ -508,6 +511,9 @@ public:
         p_pos_xy                (POS_XY_P),
 
         p_alt_hold              (ALT_HOLD_P)
+    {
+    }*/
+    Parameters()
     {
     }
 };
@@ -578,6 +584,9 @@ public:
     
     // control over servo output ranges
     SRV_Channels servo_channels;
+
+    // Additional pilot velocity items
+    AP_Int16    pilot_speed_dn;
 
     // add by weihli
     AP_Int32  aPos_lat;

@@ -202,6 +202,19 @@ bool Location_Class::get_vector_xy_from_origin_NEU(Vector3f &vec_neu) const
     return true;
 }
 
+bool Location_Class::get_vector_xy_from_origin_NE(Vector2f &vec_ne) const
+{
+    // convert to neu
+    Location ekf_origin;
+    if (!_ahrs->get_origin(ekf_origin)) {
+        return false;
+    }
+    vec_ne.x = (lat-ekf_origin.lat) * LATLON_TO_CM;
+    vec_ne.y = (lng-ekf_origin.lng) * LATLON_TO_CM * longitude_scale(ekf_origin);
+    return true;
+}
+
+
 bool Location_Class::get_vector_from_origin_NEU(Vector3f &vec_neu) const
 {
     // convert lat, lon

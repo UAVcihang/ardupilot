@@ -34,13 +34,13 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
 #endif
 
     switch (mode) {
-        case ACRO:
+        /*case ACRO:
             #if FRAME_CONFIG == HELI_FRAME
                 success = heli_acro_init(ignore_checks);
             #else
                 success = acro_init(ignore_checks);
             #endif
-            break;
+            break;*/
 
         case STABILIZE:
             #if FRAME_CONFIG == HELI_FRAME
@@ -78,7 +78,7 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
             success = rtl_init(ignore_checks);
             break;
 
-        case DRIFT:
+        /*case DRIFT:
             success = drift_init(ignore_checks);
             break;
 
@@ -88,7 +88,7 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
 
         case FLIP:
             success = flip_init(ignore_checks);
-            break;
+            break;*/
 
 #if AUTOTUNE_ENABLED == ENABLED
         case AUTOTUNE:
@@ -102,13 +102,13 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
             break;
 #endif
 
-        case BRAKE:
+        /*case BRAKE:
             success = brake_init(ignore_checks);
             break;
 
         case THROW:
             success = throw_init(ignore_checks);
-            break;
+            break;*/
 
         case AVOID_ADSB:
             success = avoid_adsb_init(ignore_checks);
@@ -122,6 +122,10 @@ bool Copter::set_mode(control_mode_t mode, mode_reason_t reason)
         case ZIGZAG:
             success = zigzag_init(ignore_checks);
             break;
+
+        case POSITION:
+        	success = position_init(ignore_checks);
+        	break;
 
         default:
             success = false;
@@ -180,13 +184,13 @@ void Copter::update_flight_mode()
     ahrs.getEkfControlLimits(ekfGndSpdLimit, ekfNavVelGainScaler);
 
     switch (control_mode) {
-        case ACRO:
+        /*case ACRO:
             #if FRAME_CONFIG == HELI_FRAME
                 heli_acro_run();
             #else
                 acro_run();
             #endif
-            break;
+            break;*/
 
         case STABILIZE:
             #if FRAME_CONFIG == HELI_FRAME
@@ -224,7 +228,7 @@ void Copter::update_flight_mode()
             rtl_run();
             break;
 
-        case DRIFT:
+        /*case DRIFT:
             drift_run();
             break;
 
@@ -234,7 +238,7 @@ void Copter::update_flight_mode()
 
         case FLIP:
             flip_run();
-            break;
+            break;*/
 
 #if AUTOTUNE_ENABLED == ENABLED
         case AUTOTUNE:
@@ -248,13 +252,13 @@ void Copter::update_flight_mode()
             break;
 #endif
 
-        case BRAKE:
+        /*case BRAKE:
             brake_run();
             break;
 
         case THROW:
             throw_run();
-            break;
+            break;*/
 
         case AVOID_ADSB:
             avoid_adsb_run();
@@ -269,6 +273,9 @@ void Copter::update_flight_mode()
             zigzag_run();
             break;
 
+        case POSITION:
+        	position_run();
+        	break;
         default:
             break;
     }
@@ -349,6 +356,7 @@ bool Copter::mode_requires_GPS(control_mode_t mode)
         case AVOID_ADSB:
         case THROW:
         case ZIGZAG:
+        case POSITION:
             return true;
         default:
             return false;
@@ -371,7 +379,7 @@ bool Copter::mode_has_manual_throttle(control_mode_t mode)
 //  arming_from_gcs should be set to true if the arming request comes from the ground station
 bool Copter::mode_allows_arming(control_mode_t mode, bool arming_from_gcs)
 {
-    if (mode_has_manual_throttle(mode) || mode == LOITER || mode == ALT_HOLD || mode == POSHOLD || mode == DRIFT || mode == SPORT || mode == THROW || (arming_from_gcs && (mode == GUIDED || mode == GUIDED_NOGPS))) {
+    if (mode_has_manual_throttle(mode) || mode == POSITION || mode == LOITER || mode == ALT_HOLD || mode == POSHOLD || mode == DRIFT || mode == SPORT || mode == THROW || (arming_from_gcs && (mode == GUIDED || mode == GUIDED_NOGPS))) {
         return true;
     }
     return false;
@@ -458,6 +466,8 @@ void Copter::notify_flight_mode(control_mode_t mode)
         case ZIGZAG:
         	notify.set_flight_mode_str("ZIG");
         	break;
+        case POSITION:
+        	notify.set_flight_mode_str("POS");
         default:
             notify.set_flight_mode_str("----");
             break;

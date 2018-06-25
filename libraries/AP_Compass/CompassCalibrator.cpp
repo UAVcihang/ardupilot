@@ -90,8 +90,8 @@ void CompassCalibrator::start(bool retry, float delay, uint16_t offset_max) {
     set_status(COMPASS_CAL_WAITING_TO_START);
 }
 
-void CompassCalibrator::get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals) {
-    if (_status != COMPASS_CAL_SUCCESS) {
+void CompassCalibrator::get_calibration(Vector3f &offsets, Vector3f &diagonals, Vector3f &offdiagonals, bool force) {
+    if (!force && _status != COMPASS_CAL_SUCCESS) {
         return;
     }
 

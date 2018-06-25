@@ -51,6 +51,24 @@ public:
     AC_PID& get_rate_pitch_pid() { return _pid_rate_pitch; }
     AC_PID& get_rate_yaw_pid() { return _pid_rate_yaw; }
 
+    // ADRC accessors
+    AC_ADRC& get_rate_roll_adrc() { return _adrc_rate_roll; }
+    AC_ADRC& get_rate_pitch_adrc() { return _adrc_rate_pitch; }
+    AC_ADRC& get_rate_yaw_adrc() { return _adrc_rate_yaw; }
+
+	void set_rate_adrc() {
+		_adrc_rate_roll.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
+        _adrc_rate_pitch.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
+        _adrc_rate_yaw.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
+	}
+
+	bool use_adrc() {
+		if(_adrc_use > 0) {
+			return true;
+		}
+		return false;
+	}
+
     // Update Alt_Hold angle maximum
     void update_althold_lean_angle_max(float throttle_in) override;
 
@@ -97,4 +115,22 @@ protected:
     AP_Float              _thr_mix_man;     // throttle vs attitude control prioritisation used when using manual throttle (higher values mean we prioritise attitude control over throttle)
     AP_Float              _thr_mix_min;     // throttle vs attitude control prioritisation used when landing (higher values mean we prioritise attitude control over throttle)
     AP_Float              _thr_mix_max;     // throttle vs attitude control prioritisation used during active flight (higher values mean we prioritise attitude control over throttle)
+
+    // for test adrc
+    AP_Float            _adrc_r0;
+    AP_Float            _adrc_b01;
+    AP_Float            _adrc_beta0;
+    AP_Float            _adrc_beta1;
+    AP_Float            _adrc_beta2;
+
+    AP_Int16             _adrc_tao_n;
+    AP_Int8             _adrc_use;
+    AP_Int8             _adrc_h_n;
+
+
+    AC_ADRC            _adrc_rate_roll;
+	AC_ADRC            _adrc_rate_pitch;
+	AC_ADRC            _adrc_rate_yaw;
+
+
 };

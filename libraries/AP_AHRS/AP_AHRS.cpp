@@ -321,8 +321,10 @@ AP_AHRS_View *AP_AHRS::create_view(enum Rotation rotation)
 {
     if (_view != nullptr) {
         // can only have one
+    	//hal.console->printf("\n\nview null");
         return nullptr;
     }
+    //hal.console->printf("\n\nview not null");
     _view = new AP_AHRS_View(*this, rotation);
     return _view;
 }
@@ -398,4 +400,31 @@ float AP_AHRS::getSSA(void)
 {
     update_AOA_SSA();
     return _SSA;
+}
+
+// rotate a 2D vector from earth frame to body frame
+Vector2f AP_AHRS::rotate_earth_to_body2D(const Vector2f &ef) const
+{
+    return Vector2f(ef.x * _cos_yaw + ef.y * _sin_yaw,
+                    -ef.x * _sin_yaw + ef.y * _cos_yaw);
+}
+
+// rotate a 2D vector from earth frame to body frame
+Vector2f AP_AHRS::rotate_body_to_earth2D(const Vector2f &bf) const
+{
+    return Vector2f(bf.x * _cos_yaw - bf.y * _sin_yaw,
+                    bf.x * _sin_yaw + bf.y * _cos_yaw);
+}
+
+
+// singleton instance
+AP_AHRS *AP_AHRS::_singleton;
+
+namespace AP {
+
+AP_AHRS &ahrs()
+{
+    return *AP_AHRS::get_singleton();
+}
+
 }

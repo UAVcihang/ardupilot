@@ -94,6 +94,30 @@ struct PACKED log_IMUDT {
     float delta_vel_x, delta_vel_y, delta_vel_z;
 };
 
+/*struct PACKED log_ISBH {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    uint16_t seqno;
+    uint8_t sensor_type; // e.g. GYRO or ACCEL
+    uint8_t instance;
+    uint16_t multiplier;
+    uint16_t sample_count;
+    uint64_t sample_us;
+    float sample_rate_hz;
+};
+static_assert(sizeof(log_ISBH) < 256, "log_ISBH is over-size");
+
+struct PACKED log_ISBD {
+    LOG_PACKET_HEADER;
+    uint64_t time_us;
+    uint16_t isb_seqno;
+    uint16_t seqno; // seqno within isb_seqno
+    int16_t x[32];
+    int16_t y[32];
+    int16_t z[32];
+};
+static_assert(sizeof(log_ISBD) < 256, "log_ISBD is over-size");*/
+
 struct PACKED log_Vibe {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -510,6 +534,20 @@ struct PACKED log_PID {
     float   AFF;
 };
 
+// ADRC message
+struct PACKED log_ADRC {
+	LOG_PACKET_HEADER;
+	uint64_t time_us;
+	float x1;
+	float x2;
+	float z1;
+	float z2;
+	float z3;
+	float e1;
+	float e2;
+
+};
+
 struct PACKED log_Current {
     LOG_PACKET_HEADER;
     uint64_t time_us;
@@ -836,6 +874,16 @@ struct PACKED log_Beacon {
 #define IMT_LABELS "TimeUS,DelT,DelvT,DelaT,DelAX,DelAY,DelAZ,DelVX,DelVY,DelVZ"
 #define IMT_FMT    "Qfffffffff"
 
+#define ISBH_LABELS "TimeUS,N,type,instance,mul,smp_cnt,SampleUS,smp_rate"
+#define ISBH_FMT    "QHBBHHQf"
+#define ISBH_UNITS  "s-----sz"
+#define ISBH_MULTS  "F-----F-"
+
+#define ISBD_LABELS "TimeUS,N,seqno,x,y,z"
+#define ISBD_FMT    "QHHaaa"
+#define ISBD_UNITS  "s--ooo"
+#define ISBD_MULTS  "F--???"
+
 #define IMU_LABELS "TimeUS,GyrX,GyrY,GyrZ,AccX,AccY,AccZ,EG,EA,T,GH,AH,GHz,AHz"
 #define IMU_FMT   "QffffffIIfBBHH"
 
@@ -931,7 +979,13 @@ Format characters in the format string for binary log messages
     { LOG_DF_MAV_STATS, sizeof(log_DF_MAV_Stats), \
       "DMS", "IIIIIBBBBBBBBBB",         "TimeMS,N,Dp,RT,RS,Er,Fa,Fmn,Fmx,Pa,Pmn,Pmx,Sa,Smn,Smx" }, \
     { LOG_BEACON_MSG, sizeof(log_Beacon), \
-      "BCN", "QBBfffffff",  "TimeUS,Health,Cnt,D0,D1,D2,D3,PosX,PosY,PosZ" }
+      "BCN", "QBBfffffff",  "TimeUS,Health,Cnt,D0,D1,D2,D3,PosX,PosY,PosZ" }, \
+    { LOG_ADRCR_MSG, sizeof(log_ADRC), \
+      "ADR", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2" }, \
+    { LOG_ADRCP_MSG, sizeof(log_ADRC),   \
+      "ADP", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2"}, \
+    { LOG_ADRCY_MSG, sizeof(log_ADRC),   \
+      "ADY", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2"}
 
 // messages for more advanced boards
 #define LOG_EXTRA_STRUCTURES \
@@ -1213,6 +1267,14 @@ enum LogMessages {
     LOG_VISUALODOM_MSG,
     LOG_AOA_SSA_MSG,
     LOG_BEACON_MSG,
+
+
+    // log adrc message
+    LOG_ADRCP_MSG,
+    LOG_ADRCR_MSG,
+    LOG_ADRCY_MSG
+    /*LOG_ISBH_MSG,
+    LOG_ISBD_MSG,*/
 };
 
 enum LogOriginType {

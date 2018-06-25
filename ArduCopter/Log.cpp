@@ -363,7 +363,7 @@ void Copter::Log_Write_Performance()
         max_time         : perf_info_get_max_time(),
         pm_test          : pmTest1,
         i2c_lockup_count : 0,
-        ins_error_count  : ins.error_count(),
+        ins_error_count  : 0,//ins.error_count(),
         log_dropped      : DataFlash.num_dropped() - perf_info_get_num_dropped(),
         hal.util->available_memory()
     };
@@ -378,10 +378,17 @@ void Copter::Log_Write_Attitude()
     DataFlash.Log_Write_Attitude(ahrs, targets);
     DataFlash.Log_Write_Rate(ahrs, *motors, *attitude_control, *pos_control);
     if (should_log(MASK_LOG_PID)) {
+    	if(!attitude_control->use_adrc()) {
         DataFlash.Log_Write_PID(LOG_PIDR_MSG, attitude_control->get_rate_roll_pid().get_pid_info());
         DataFlash.Log_Write_PID(LOG_PIDP_MSG, attitude_control->get_rate_pitch_pid().get_pid_info());
         DataFlash.Log_Write_PID(LOG_PIDY_MSG, attitude_control->get_rate_yaw_pid().get_pid_info());
-        DataFlash.Log_Write_PID(LOG_PIDA_MSG, g.pid_accel_z.get_pid_info() );
+        DataFlash.Log_Write_PID(LOG_PIDA_MSG, /*g.pid_accel_z.get_pid_info()*/pos_control->get_accel_z_pid().get_pid_info());
+    	}
+    	else {
+    		DataFlash.Log_Write_ADRC(LOG_ADRCR_MSG, attitude_control->get_rate_roll_adrc());
+    		DataFlash.Log_Write_ADRC(LOG_ADRCP_MSG, attitude_control->get_rate_pitch_adrc());
+    		DataFlash.Log_Write_ADRC(LOG_ADRCY_MSG, attitude_control->get_rate_yaw_adrc());
+    	}
     }
 }
 
@@ -599,6 +606,16 @@ void Copter::Log_Write_Parameter_Tuning(uint8_t param, float tuning_val, int16_t
     DataFlash.WriteBlock(&pkt_tune, sizeof(pkt_tune));
 }
 
+
+// Write an ADRC packet
+void Copter::Log_Write_ADRC()
+{
+
+	DataFlash.Log_Write_ADRC(LOG_ADRCR_MSG, attitude_control->get_rate_roll_adrc());
+	DataFlash.Log_Write_ADRC(LOG_ADRCP_MSG, attitude_control->get_rate_pitch_adrc());
+	DataFlash.Log_Write_ADRC(LOG_ADRCY_MSG, attitude_control->get_rate_yaw_adrc());
+}
+
 // log EKF origin and ahrs home to dataflash
 void Copter::Log_Write_Home_And_Origin()
 {
@@ -743,7 +760,7 @@ struct PACKED log_Throw {
 };
 
 // Write a Throw mode details
-void Copter::Log_Write_Throw(ThrowModeStage stage, float velocity, float velocity_z, float accel, float ef_accel_z, bool throw_detect, bool attitude_ok, bool height_ok, bool pos_ok)
+/*void Copter::Log_Write_Throw(ThrowModeStage stage, float velocity, float velocity_z, float accel, float ef_accel_z, bool throw_detect, bool attitude_ok, bool height_ok, bool pos_ok)
 {
     struct log_Throw pkt = {
         LOG_PACKET_HEADER_INIT(LOG_THROW_MSG),
@@ -759,7 +776,7 @@ void Copter::Log_Write_Throw(ThrowModeStage stage, float velocity, float velocit
         pos_ok          : pos_ok
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
+}*/
 
 // proximity sensor logging
 struct PACKED log_Proximity {

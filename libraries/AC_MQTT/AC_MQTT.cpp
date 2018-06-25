@@ -94,6 +94,7 @@ void AC_MQTT::update(){
 		return;
 	}
 
+	//hal.console->printf("mqtt connected\n\n\n");
 	// send 0xc0 0x00
 	if(!sendflag){
 		//ethernet.sendHeart();
@@ -112,7 +113,7 @@ void AC_MQTT::update(){
 	        if (_ahrs->get_gps().status() >= AP_GPS::GPS_OK_FIX_3D) {
 	        	lastTimeGpsReceived_ms = _ahrs->get_gps().last_message_time_ms();
 
-	        	hal.console->printf("mqtt publish\n");
+	        	//hal.console->printf("mqtt publish\n");
 	        	const struct Location &gpsloc = _ahrs->get_gps().location();
 	        	Vector3f curr_vel;
 	        	_ahrs->get_velocity_NED(curr_vel);
@@ -128,6 +129,15 @@ void AC_MQTT::update(){
 	        	client.publish("uav-gps", message);
 
 	        }
+	        /*else{
+	        	sprintf(buf, "gps no fix");
+	        	message.qos = MQTT::QOS0;
+	        	message.retained = false;
+	        	message.dup = false;
+	        	message.payload = (void*)buf;
+	        	message.payloadlen = strlen(buf) + 1;
+	        	client.publish("uav-gps", message);
+	        }*/
 	    }
 	    sendflag = false;
 	}

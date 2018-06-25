@@ -218,10 +218,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //  OPTICAL_FLOW & VISUAL ODOMETRY
 #ifndef OPTFLOW
- # define OPTFLOW       ENABLED
+ # define OPTFLOW       DISABLED///ENABLED
 #endif
 #ifndef VISUAL_ODOMETRY_ENABLED
-# define VISUAL_ODOMETRY_ENABLED ENABLED
+# define VISUAL_ODOMETRY_ENABLED DISABLED///ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -239,25 +239,25 @@
 //////////////////////////////////////////////////////////////////////////////
 // Precision Landing with companion computer or IRLock sensor
 #ifndef PRECISION_LANDING
- # define PRECISION_LANDING ENABLED
+ # define PRECISION_LANDING DISABLED ///ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 //	gripper
 #ifndef GRIPPER_ENABLED
- # define GRIPPER_ENABLED ENABLED
+ # define GRIPPER_ENABLED DISABLED ///ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Parachute release
 #ifndef PARACHUTE
- # define PARACHUTE ENABLED
+ # define PARACHUTE DISABLED ///ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // ADSB support
 #ifndef ADSB_ENABLED
-# define ADSB_ENABLED ENABLED
+# define ADSB_ENABLED DISABLED ///ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -353,14 +353,14 @@
 // CAMERA TRIGGER AND CONTROL
 //
 #ifndef CAMERA
- # define CAMERA        ENABLED
+ # define CAMERA        DISABLED//ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // MOUNT (ANTENNA OR CAMERA)
 //
 #ifndef MOUNT
- # define MOUNT         ENABLED
+ # define MOUNT         DISABLED//ENABLED
 #endif
 
 
@@ -645,7 +645,7 @@
 
 //use this to completely disable FRSKY TELEM
 #ifndef FRSKY_TELEM_ENABLED
-  #  define FRSKY_TELEM_ENABLED          ENABLED
+  #  define FRSKY_TELEM_ENABLED          DISABLED///ENABLED
 #endif
 
 #ifndef ADVANCED_FAILSAFE

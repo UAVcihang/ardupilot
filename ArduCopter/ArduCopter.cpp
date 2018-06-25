@@ -117,7 +117,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(ekf_check,             10,     75),
     SCHED_TASK(gpsglitch_check,       10,     50),
     SCHED_TASK(landinggear_update,    10,     75),
-    SCHED_TASK(lost_vehicle_check,    10,     50),
+    //SCHED_TASK(lost_vehicle_check,    10,     50),
     SCHED_TASK(gcs_check_input,      400,    180),
     SCHED_TASK(gcs_send_heartbeat,     1,    110),
     SCHED_TASK(gcs_send_deferred,     50,    550),
@@ -514,7 +514,7 @@ void Copter::one_hz_loop()
     check_usb_mux();
 
     // enable/disable raw gyro/accel logging
-    ins.set_raw_logging(should_log(MASK_LOG_IMU_RAW));
+    ins.set_raw_logging(should_log(MASK_LOG_IMU_RAW)); // copter3.6-rc2
 
     // log terrain data
     terrain_logging();

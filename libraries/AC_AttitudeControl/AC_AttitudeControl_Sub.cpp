@@ -10,14 +10,14 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Param: RAT_RLL_P
     // @DisplayName: Roll axis rate controller P gain
     // @Description: Roll axis rate controller P gain.  Converts the difference between desired roll rate and actual roll rate into a motor speed output
-    // @Range: 0.08 0.30
+    // @Range: 0.0 0.30
     // @Increment: 0.005
     // @User: Standard
 
     // @Param: RAT_RLL_I
     // @DisplayName: Roll axis rate controller I gain
     // @Description: Roll axis rate controller I gain.  Corrects long-term difference in desired roll rate vs actual roll rate
-    // @Range: 0.01 0.5
+    // @Range: 0.0 0.5
     // @Increment: 0.01
     // @User: Standard
 
@@ -26,7 +26,7 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Description: Roll axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output
     // @Range: 0 1
     // @Increment: 0.01
-    // @Units: Percent
+    // @Units: %
     // @User: Standard
 
     // @Param: RAT_RLL_D
@@ -55,14 +55,14 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Param: RAT_PIT_P
     // @DisplayName: Pitch axis rate controller P gain
     // @Description: Pitch axis rate controller P gain.  Converts the difference between desired pitch rate and actual pitch rate into a motor speed output
-    // @Range: 0.08 0.30
+    // @Range: 0.0 0.30
     // @Increment: 0.005
     // @User: Standard
 
     // @Param: RAT_PIT_I
     // @DisplayName: Pitch axis rate controller I gain
     // @Description: Pitch axis rate controller I gain.  Corrects long-term difference in desired pitch rate vs actual pitch rate
-    // @Range: 0.01 0.5
+    // @Range: 0.0 0.5
     // @Increment: 0.01
     // @User: Standard
 
@@ -71,7 +71,7 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Description: Pitch axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output
     // @Range: 0 1
     // @Increment: 0.01
-    // @Units: Percent
+    // @Units: %
     // @User: Standard
 
     // @Param: RAT_PIT_D
@@ -100,14 +100,14 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Param: RAT_YAW_P
     // @DisplayName: Yaw axis rate controller P gain
     // @Description: Yaw axis rate controller P gain.  Converts the difference between desired yaw rate and actual yaw rate into a motor speed output
-    // @Range: 0.10 0.50
+    // @Range: 0.0 0.50
     // @Increment: 0.005
     // @User: Standard
 
     // @Param: RAT_YAW_I
     // @DisplayName: Yaw axis rate controller I gain
     // @Description: Yaw axis rate controller I gain.  Corrects long-term difference in desired yaw rate vs actual yaw rate
-    // @Range: 0.010 0.05
+    // @Range: 0.0 0.05
     // @Increment: 0.01
     // @User: Standard
 
@@ -116,7 +116,7 @@ const AP_Param::GroupInfo AC_AttitudeControl_Sub::var_info[] = {
     // @Description: Yaw axis rate controller I gain maximum.  Constrains the maximum motor output that the I gain will output
     // @Range: 0 1
     // @Increment: 0.01
-    // @Units: Percent
+    // @Units: %
     // @User: Standard
 
     // @Param: RAT_YAW_D
@@ -171,7 +171,10 @@ AC_AttitudeControl_Sub::AC_AttitudeControl_Sub(AP_AHRS_View &ahrs, const AP_Vehi
     _motors_multi(motors),
     _pid_rate_roll(AC_ATC_SUB_RATE_RP_P, AC_ATC_SUB_RATE_RP_I, AC_ATC_SUB_RATE_RP_D, AC_ATC_SUB_RATE_RP_IMAX, AC_ATC_SUB_RATE_RP_FILT_HZ, dt),
     _pid_rate_pitch(AC_ATC_SUB_RATE_RP_P, AC_ATC_SUB_RATE_RP_I, AC_ATC_SUB_RATE_RP_D, AC_ATC_SUB_RATE_RP_IMAX, AC_ATC_SUB_RATE_RP_FILT_HZ, dt),
-	_pid_rate_yaw(AC_ATC_SUB_RATE_YAW_P, AC_ATC_SUB_RATE_YAW_I, AC_ATC_SUB_RATE_YAW_D, AC_ATC_SUB_RATE_YAW_IMAX, AC_ATC_SUB_RATE_YAW_FILT_HZ, dt)
+	_pid_rate_yaw(AC_ATC_SUB_RATE_YAW_P, AC_ATC_SUB_RATE_YAW_I, AC_ATC_SUB_RATE_YAW_D, AC_ATC_SUB_RATE_YAW_IMAX, AC_ATC_SUB_RATE_YAW_FILT_HZ, dt),
+    _adrc_rate_roll(dt, 0.135f, 0.0036),
+    _adrc_rate_pitch(dt, 0.135f, 0.0036),
+    _adrc_rate_yaw(dt, 0.18f, 0.0036)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
@@ -195,7 +198,7 @@ void AC_AttitudeControl_Sub::update_althold_lean_angle_max(float throttle_in)
         return;
     }
 
-    float althold_lean_angle_max = acos(constrain_float(_throttle_in/(AC_ATTITUDE_CONTROL_ANGLE_LIMIT_THROTTLE_MAX * thr_max), 0.0f, 1.0f));
+    float althold_lean_angle_max = acosf(constrain_float(_throttle_in/(AC_ATTITUDE_CONTROL_ANGLE_LIMIT_THROTTLE_MAX * thr_max), 0.0f, 1.0f));
     _althold_lean_angle_max = _althold_lean_angle_max + (_dt/(_dt+_angle_limit_tc))*(althold_lean_angle_max-_althold_lean_angle_max);
 }
 

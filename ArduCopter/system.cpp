@@ -116,6 +116,7 @@ void Copter::init_ardupilot()
     // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
     
+    //hal.console->printf("\n\nInit serial_manager ");
     // initialise serial ports
     serial_manager.init();
 
@@ -128,6 +129,7 @@ void Copter::init_ardupilot()
     // more than 5ms remaining in your call to hal.scheduler->delay
     hal.scheduler->register_delay_callback(mavlink_delay_cb_static, 5);
     
+    //hal.console->printf("\n\nInit boardconfig ");
     BoardConfig.init();
 
     // init cargo gripper
@@ -145,6 +147,7 @@ void Copter::init_ardupilot()
     // Init RSSI
     rssi.init();
     
+    //hal.console->printf("\n\nbaro ");
     barometer.init();
 
     // we start by assuming USB connected, as we initialed the serial
@@ -186,6 +189,11 @@ void Copter::init_ardupilot()
     // allocate the motors class
     allocate_motors();
 
+    // 初始化配制为水泵的pwm口
+    /*if (SRV_Channels::function_assigned(SRV_Channel::k_sprayer_pump)) {
+    	SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_pump, 1094);
+    }*/
+
     // sets up motors and output to escs
     init_rc_out();
 
@@ -194,6 +202,7 @@ void Copter::init_ardupilot()
 
     // initialise which outputs Servo and Relay events can use
     ServoRelayEvents.set_channel_mask(~motors->get_motor_mask());
+    ServoRelayEvents.do_set_servo(9, 1094);
 
     relay.init();
 
@@ -219,14 +228,16 @@ void Copter::init_ardupilot()
 
     // init Location class
     Location_Class::set_ahrs(&ahrs);
+    hal.console->printf("\n\n init wp_nav");
 #if AP_TERRAIN_AVAILABLE && AC_TERRAIN
     Location_Class::set_terrain(&terrain);
     wp_nav->set_terrain(&terrain);
 #endif
 #if AC_AVOID_ENABLED == ENABLED
     wp_nav->set_avoidance(&avoid);
+    loiter_nav->set_avoidance(&avoid);
 #endif
-
+    hal.console->printf("\n\n init attitude_control");
     attitude_control->parameter_sanity_check();
     pos_control->set_dt(MAIN_LOOP_SECONDS);
 
@@ -320,6 +331,8 @@ void Copter::init_ardupilot()
     // enable CPU failsafe
     failsafe_enable();
 
+    // log raw imu data from copter-3.6-rc2
+    //ins.set_log_raw_bit(MASK_LOG_IMU_RAW);
     ins.set_raw_logging(should_log(MASK_LOG_IMU_RAW));
     ins.set_dataflash(&DataFlash);
 
@@ -656,9 +669,10 @@ void Copter::allocate_motors(void)
     }
     AP_Param::load_object_from_eeprom(attitude_control, ac_var_info);
         
-    pos_control = new AC_PosControl(*ahrs_view, inertial_nav, *motors, *attitude_control,
+    /*pos_control = new AC_PosControl(*ahrs_view, inertial_nav, *motors, *attitude_control,
                                     g.p_alt_hold, g.p_vel_z, g.pid_accel_z,
-                                    g.p_pos_xy, g.pi_vel_xy);
+                                    g.p_pos_xy, g.pi_vel_xy);*/
+    pos_control = new AC_PosControl(*ahrs_view, inertial_nav, *motors, *attitude_control);
     if (pos_control == nullptr) {
         AP_HAL::panic("Unable to allocate PosControl");
     }
@@ -670,8 +684,14 @@ void Copter::allocate_motors(void)
     }
     AP_Param::load_object_from_eeprom(wp_nav, wp_nav->var_info);
 
+    loiter_nav = new AC_Loiter(inertial_nav, *ahrs_view, *pos_control, *attitude_control);
+    if (loiter_nav == nullptr) {
+        AP_HAL::panic("Unable to allocate LoiterNav");
+    }
+    AP_Param::load_object_from_eeprom(loiter_nav, loiter_nav->var_info);
+
     circle_nav = new AC_Circle(inertial_nav, *ahrs_view, *pos_control);
-    if (wp_nav == nullptr) {
+    if (circle_nav == nullptr) {
         AP_HAL::panic("Unable to allocate CircleNav");
     }
     AP_Param::load_object_from_eeprom(circle_nav, circle_nav->var_info);
