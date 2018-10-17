@@ -199,6 +199,17 @@ template float constrain_value<float>(const float amt, const float low, const fl
 template double constrain_value<double>(const double amt, const double low, const double high);
 
 
+
+template<class T>
+T expo(const T value, const T e){
+	T x = constrain_value(value, (T)-1, (T)1);
+	return (1 - e)* x + e * x * x * x;
+}
+
+template float expo<float>(const float value, const float e);
+template double expo<double>(const double value, const double e);
+
+
 /*
   simple 16 bit random number generator
  */

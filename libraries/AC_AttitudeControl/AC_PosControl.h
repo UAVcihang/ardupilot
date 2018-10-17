@@ -148,6 +148,14 @@ public:
     /// update_z_controller - fly to altitude in cm above home
     void update_z_controller();
 
+    /* New z axis controller
+     * Test by wehli
+     * */
+    void update_z_controller_new();
+    void run_z_controller_new();
+    void thrustToAttitude(float yaw);
+    /* End*/
+
     // get_leash_down_z, get_leash_up_z - returns vertical leash lengths in cm
     float get_leash_down_z() const { return _leash_down_z; }
     float get_leash_up_z() const { return _leash_up_z; }
@@ -421,6 +429,9 @@ protected:
     LowPassFilterFloat _vel_error_filter;   // low-pass-filter on z-axis velocity error
 
     LowPassFilterVector2f _accel_target_filter; // acceleration target filter
+
+    /* add by weihli */
+    //LowPassFilterVector3f _vel_deriv;
 
     // ekf reset handling
     uint32_t    _ekf_xy_reset_ms;      // system time of last recorded ekf xy position reset

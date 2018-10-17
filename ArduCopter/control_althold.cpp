@@ -54,7 +54,7 @@ void Copter::althold_run()
     // helicopters are held on the ground until rotor speed runup has finished
     bool takeoff_triggered = (ap.land_complete && (target_climb_rate > 0.0f) && motors->rotor_runup_complete());
 #else
-    bool takeoff_triggered = ap.land_complete && (target_climb_rate > 0.0f);
+    bool takeoff_triggered = ap.land_complete && (target_climb_rate > 0.0f) && ap.motor_spin_all;
 #endif
 
     // Alt Hold State Machine Determination

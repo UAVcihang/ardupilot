@@ -105,6 +105,10 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(barometer_accumulate,  50,     90),
     // 添加发送MQTT协议数据的任务 1Hz
     SCHED_TASK(send_mqtt,              1,     500),
+
+    // UKF更新任务
+	SCHED_TASK(update_ukf,           200,     200),
+    SCHED_TASK(update_flowermeter, 10,     100),
 #if PRECISION_LANDING == ENABLED
     SCHED_TASK(update_precland,      400,     50),
 #endif
@@ -213,6 +217,12 @@ void Copter::perf_update(void)
     }
     perf_info_reset();
     pmTest1 = 0;
+}
+
+// UKF 更新-- 400hz
+void Copter::update_ukf(void)
+{
+	//ukf.update();
 }
 
 /*
@@ -526,6 +536,14 @@ void Copter::one_hz_loop()
     // indicates that the sensor or subsystem is present but not
     // functioning correctly
     update_sensor_status_flags();
+
+    //hal.console->printf("Flowermeter pwm total\n"/*, flowermeter.get_totallyCount(), flowermeter.get_pwmCount(), flowermeter.get_flowerVel()*/);
+
+
+    //char buf[256];
+    //sprintf(buf, "period %llu, count %llu, velocity %llu\n", flowermeter.get_period(), flowermeter.get_pwmCount(), flowermeter.get_flowerVel());
+    //GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, buf);
+    //hal.console->printf("Flowermeter period %llu, current pwm count %llu, velocity pwm %llu\n", flowermeter.get_period(), flowermeter.get_pwmCount(), flowermeter.get_flowerVel());
 }
 
 // called at 50hz
@@ -649,6 +667,56 @@ void Copter::update_altitude()
     // write altitude info to dataflash logs
     if (should_log(MASK_LOG_CTUN)) {
         Log_Write_Control_Tuning();
+    }
+}
+
+// 读取流量计数据
+void Copter::update_flowermeter()
+{
+	static uint64_t last_of_update = 0;
+	static uint32_t true_cnt=0;
+	static uint32_t false_cnt = 0;
+	//Vector3f vel = inertial_nav.get_velocity();
+    // 更新流量计
+    flowermeter.update();
+
+    uint16_t pwm = 0;
+    if(!SRV_Channels::get_output_pwm(SRV_Channel::k_sprayer_pump, pwm))
+    {
+    	// 没有开启水泵功能
+    	return;
+    }
+
+    if(flowermeter.last_update() != last_of_update ) {
+
+    	last_of_update = flowermeter.last_update();
+    	if(true_cnt > 10 && !flowermeter.get_valid()){
+    		flowermeter.set_valid(true);
+    	}
+    	true_cnt++;
+    	false_cnt = 0;
+    	//float speed = norm(vel.x, vel.y);
+    	/*if(flowermeter.get_flowerVel() < 3 && pwm > 1200){
+    		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Drug Empty");
+    	}*/
+    }
+    else{
+    	if((pwm > 1200) && flowermeter.get_valid()){
+    		false_cnt++;
+    		true_cnt = 0;
+    		if(false_cnt > 10){
+    			flowermeter.set_valid(false);
+    			//true_cnt = 0;
+    			false_cnt = 0;
+    			// 药量与电量保护使用同一函数
+    			//failsafe_battery_event();
+    			failsafe_drug_event();
+    		}
+    	}
+    	/*else
+    	{
+    		false_cnt = 0;
+    	}*/
     }
 }
 

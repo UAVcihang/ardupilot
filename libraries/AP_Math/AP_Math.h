@@ -17,6 +17,7 @@
 #include "rotations.h"
 #include "vector2.h"
 #include "vector3.h"
+//#include "matrix.h"
 
 // define AP_Param types AP_Vector3f and Ap_Matrix3f
 AP_PARAMDEFV(Vector3f, Vector3f, AP_PARAM_VECTOR3F);
@@ -164,6 +165,24 @@ static inline float degrees(float rad)
 {
     return rad * RAD_TO_DEG;
 }
+
+// 获取正负号
+template<class T>
+int8_t sign(const T val)
+{
+	if(val < 0){
+		return -1;
+	}else if(val >0) {
+		return 1;
+	}
+	return 0;
+}
+
+template<class T>
+T expo(const T value, const T e);
+
+
+
 
 template<class T>
 float sq(const T val)

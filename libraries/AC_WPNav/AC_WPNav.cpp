@@ -356,10 +356,14 @@ bool AC_WPNav::update_zigzag_wpnav(void)
     // 高度控制在外围
     //_pos_control.set_accel_z(_wp_accel_z_cmss);
 
+    if(_mode){
+    	advance_u_turn(dt);
+    }else {
     // advance the target if necessary
     if (!advance_wp_target_along_track_xy(dt)) {
         // To-Do: handle inability to advance along track (probably because of missing terrain data)
         ret = false;
+    }
     }
 
     // freeze feedforwards during known discontinuities
@@ -376,6 +380,16 @@ bool AC_WPNav::update_zigzag_wpnav(void)
 
     return ret;
 }
+
+/*/bool AC_WPNav::advance_u_turn(float dt)
+{
+    // calculate max velocity based on waypoint speed ensuring we do not use more than half our max acceleration for accelerating towards the center of the circle
+    float velocity_max = MIN(_pos_control.get_speed_xy(), safe_sqrt(0.5f*_pos_control.get_accel_xy()*_radius));
+
+    // angular_velocity in radians per second
+    float _angular_vel_max = velocity_max/_radius;
+    //_angular_vel_max = constrain_float(ToRad(_rate),-_angular_vel_max,_angular_vel_max);
+}*/
 
 bool AC_WPNav::advance_wp_target_along_track_xy(float dt)
 {
@@ -402,6 +416,7 @@ bool AC_WPNav::advance_wp_target_along_track_xy(float dt)
     // calculate how far along the track we are
     track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y + curr_delta.z * _pos_delta_unit.z;
 
+
     // calculate the point closest to the vehicle on the segment from origin to destination
     Vector3f track_covered_pos = _pos_delta_unit * track_covered;
 
@@ -411,6 +426,7 @@ bool AC_WPNav::advance_wp_target_along_track_xy(float dt)
     // calculate the horizontal error
     float track_error_xy = norm(track_error.x, track_error.y);
 
+    _track_covered = track_error_xy;
     // calculate the vertical error
     float track_error_z = fabsf(track_error.z);
 
@@ -1033,6 +1049,22 @@ bool AC_WPNav::update_spline()
     return ret;
 }
 
+/* Cubic Hermite Interpolation
+ *  P(t) = a*t^3 + b*t^2 + c*t + d
+ *  P'(t) = 3a*t^2 + 2b*t + c
+ *  P(0) = origin = d
+ *  P(1) = dest = a + b + c + d
+ *  P'(0) = origin_vel = c
+ *  P'(1) = dest_vel = 3a + 2b + c
+ *
+ *
+ *  _hermite_spline_solution[0] = d = origin
+ *  _hermite_spline_solution[1] = c = origin_vel
+ *  _hermite_spline_solution[2] = b = -origin*3.0f -origin_vel*2.0f + dest*3.0f - dest_vel
+ *  _hermite_spline_solution[3] = a = origin*2.0f + origin_vel -dest*2.0f + dest_vel
+ * */
+
+
 /// update_spline_solution - recalculates hermite_spline_solution grid
 ///		relies on _spline_origin_vel, _spline_destination_vel and _origin and _destination
 void AC_WPNav::update_spline_solution(const Vector3f& origin, const Vector3f& dest, const Vector3f& origin_vel, const Vector3f& dest_vel)
@@ -1151,6 +1183,14 @@ bool AC_WPNav::advance_spline_target_along_track(float dt)
     return true;
 }
 
+/* Cubic Hermite
+ * P(t) = a*t^3 + b*t^2 + c*t + d
+ * P'(t) = 3a*t^2 + 2b*t + c
+ * _hermite_spline_solution[0] = d
+ * _hermite_spline_solution[1] = c
+ * _hermite_spline_solution[2] = b
+ * _hermite_spline_solution[3] = a
+ * */
 // calc_spline_pos_vel_accel - calculates target position, velocity and acceleration for the given "spline_time"
 /// 	relies on update_spline_solution being called when the segment's origin and destination were set
 void AC_WPNav::calc_spline_pos_vel(float spline_time, Vector3f& position, Vector3f& velocity)

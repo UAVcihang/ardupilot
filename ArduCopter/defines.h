@@ -130,6 +130,7 @@ enum mode_reason_t {
     MODE_REASON_AVOIDANCE,
     MODE_REASON_AVOIDANCE_RECOVERY,
     MODE_REASON_THROW_COMPLETE,
+    MODE_REASON_DRUG_FAILSAFE,
 };
 
 // Tuning enumeration
@@ -228,6 +229,16 @@ enum ZigzagBPMode {
 	Zigzag_DrugNone,
 	Zigzag_ModeSwitch,
 	Zigzag_PilotOverride,
+};
+
+// Fly direction
+enum ZigzagFlyDirec {
+	//Zigzag_None = 0,
+	Zigzag_A2A,
+	Zigzag_B2B,
+	Zigzag_A2B,
+	Zigzag_B2A,
+
 };
 
 // Guided modes

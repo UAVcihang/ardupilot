@@ -111,6 +111,7 @@ void NavEKF2_core::InitialiseVariables()
 {
     // calculate the nominal filter update rate
     const AP_InertialSensor &ins = _ahrs->get_ins();
+    // ins的更新时间2.5ms 而acc 与 gyro 的采样时间为1ms  ekf融合时间10ms
     localFilterTimeStep_ms = (uint8_t)(1000*ins.get_loop_delta_t());
     localFilterTimeStep_ms = MAX(localFilterTimeStep_ms,10);
 
@@ -352,9 +353,9 @@ bool NavEKF2_core::InitialiseFilterBootstrap(void)
     InitialiseVariables();
 
     // Initialise IMU data
-    dtIMUavg = _ahrs->get_ins().get_loop_delta_t();
+    dtIMUavg = _ahrs->get_ins().get_loop_delta_t(); // 更新时间为2.5ms
     readIMUData();
-    storedIMU.reset_history(imuDataNew);
+    storedIMU.reset_history(imuDataNew); // storedIMU有 26个数据
     imuDataDelayed = imuDataNew;
 
     // acceleration vector in XYZ body axes measured by the IMU (m/s^2)
@@ -366,11 +367,18 @@ bool NavEKF2_core::InitialiseFilterBootstrap(void)
     // read the magnetometer data
     readMagData();
 
+    // 初始化状态
     // normalise the acceleration vector
     float pitch=0, roll=0;
     if (initAccVec.length() > 0.001f) {
         initAccVec.normalize();
+/*
+                           |cP*cY              cP*sY         -sP  |   |0|    |-sP   |
+        // a = Rn2b * g =  |cY*sP*sR-sY*cR  sY*sP*sR+cY*cR  sR*cP | * |0| =  |sR*cP |
+                           |cY*sP*cR+sY*sR  sY*sP*cR-cY*cR  cR*cP |   |1|    |cR*cP |
 
+       pitch = asinf(a.x)
+*/
         // calculate initial pitch angle
         pitch = asinf(initAccVec.x);
 
@@ -1417,6 +1425,7 @@ void NavEKF2_core::ConstrainStates()
     }
 }
 
+// 地球每个地方的自转角速度都是一样的，大小为earthRate, 方向平行与地心轴，转到NED坐标系下就不一样了
 // calculate the NED earth spin vector in rad/sec
 void NavEKF2_core::calcEarthRateNED(Vector3f &omega, int32_t latitude) const
 {

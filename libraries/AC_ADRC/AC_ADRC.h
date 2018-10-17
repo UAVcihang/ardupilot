@@ -3,7 +3,7 @@
  *
  *  Created on: 2017-3-20
  *      Author: weihli
- *      Ref: OLD_FC_X att_control
+ *      Ref:
  */
 
 #ifndef AC_ADRC_H_
@@ -32,71 +32,107 @@
 class AC_ADRC {
 public:
 
-	//AC_ADRC(float T, float kp, float kd);
-	AC_ADRC(float T, float kp, float kd, float r0 = 30000.0f, float b01 = 40.0f, float beta0 = 400.0f, float beta1 = 4000.0f, float beta2 = 8000.0f, int16_t tao_n = 400, int8_t h_n = 10);
+	AC_ADRC(float T, float kp, float kd, float a1, float a2, float r0 = 30000.0f, float b01 = 9000.0f, float beta0 = 400.0f, float beta1 = 4000.0f, float beta2 = 8000.0f, int16_t tao_n = 400, int16_t delta_n = 400, int16_t h_n = 5);
 
-
-	void init(float r0, float b01, float beta0, float beta1, float beta2, int16_t tao_n, int8_t h_n){
-		_r0 = r0;
+	void init()
+	{
+		/*_r0 = r0;
 		_b01 = b01;
 		_beta0 = beta0;
 		_beta1 = beta1;
-		_beta2 = beta2;
+		_beta2 = beta2;*/
+		if(_enable == 0)
+			return;
 
-		if(tao_n <= 0) {
-			tao_n = 1;
+		if(_tao_n.get() <= 0)
+		{
+			_tao_n.set_and_save(1);
 		}
-		_tao = _h0 * tao_n;
+		_tao = _h0 * _tao_n.get();
 
-		if(h_n <= 0) {
-			h_n = 1;
+		if(_h_n.get() <= 0) {
+			_h_n.set_and_save(1);
 		}
-		_h1 = _h0 * h_n;
+		_h1 = _h0 * _h_n.get();
+
+		if(_delta_n.get() <= 0) {
+			_delta_n.set_and_save(1);
+		}
+		_delta = _h0 * _delta_n.get();
 	}
 
+	void reset(){
+		_e0 = _e1 =  _e2 = 0;
+		_eso_error = 0.0f;
+		_disturb_u = _disturb = 0.0f;
+		_u = 0;
+	}
+
+	int8_t get_enable(void) {
+		return _enable.get();
+	}
+
+	float adrc_constrain(float val, float min, float max);
 	float control_adrc(float v,float y,float u,float MAX);
 
-	float get_e1() const{
+	float get_e1() const
+	{
 		return _e1;
 	}
-	
-	float get_e2() const{
+
+	float get_e2() const
+	{
 		return _e2;
 	}
-	
-	float get_z3() const{
+
+	float get_z3() const
+	{
 		return _z[2];
 	}
-	
-	float get_z2() const{
+
+	float get_z2() const
+	{
 		return _z[1];
 	}
 
-	float get_z1() const{
+	float get_z1() const
+	{
 		return _z[0];
 	}
 
-	float get_x1() const{
+	float get_x1() const
+	{
 		return _v1;
 	}
 
-	float get_x2() const{
+	float get_x2() const
+	{
 		return _v2;
 	}
 
-    // user settable parameters
+	float get_eso_error() const
+	{
+		return _eso_error;
+	}
+
+	float get_u() const
+	{
+		return _u;
+	}
+
     static const struct AP_Param::GroupInfo var_info[];
 protected:
 	float fst(float x1,float x2,float w,float h);
 	float fal(float e,float alfa,float delta);
-	float fst2(float x1,float x2,float w, float h);
-	//float sign(float x);
-	float eso_3n(float v,float y,float u,float T,float MAX);
-	float eso_2n(float v,float y,float u,float T,float MAX);
+	float fhan(float x1,float x2,float r, float h);
+	float fsg(float x,float d);
+
 	float adrc_eso(float v,float y,float u,float T,float MAX);
+	float adrc_nsl(float v,float y,float u,float T,float MAX);
 	void adrc_td(float in);
 
-	int8_t sign_adrc(float input){
+	int8_t sign_adrc(float input) //adrcé¨å‹­îƒé™å³°åš±éï¿½
+	{
 		//int8_t output
 		if(input > 1e-6) {
 			return 1;
@@ -107,34 +143,36 @@ protected:
 		else
 			return 0;
 	}
-	// ¸ú×ÙÆ÷²ÎÊı
-	// ²ÎÊı
+
+	AP_Int8 _enable;
 	AP_Float _kp, _kd;
-	float _beta0, _beta1, _beta2;
-	float _r0; //¸ú×ÙËÙ¶È
-	float _b01; //Ä£ĞÍÔöÒæ
-	float  _alfa1, _alfa2; // ·ÇÏßĞÔ
+	AP_Float _alfa1, _alfa2;
+	//AP_Float _delta;
+	AP_Float _beta0, _beta1, _beta2;
+	AP_Float _r0; //é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”ŸåŠ«è®¹æ‹·
+	AP_Float _b01; //æ¨¡é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
+	//float  _alfa1, _alfa2; // é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
+
+	AP_Int16  _tao_n;
+	AP_Int16  _h_n;
+	AP_Int16  _delta_n;
 
 	float _tao;
-	float _h0; //ÂË²¨Òò×Ó
-
-	//float _r1;
 	float _h1;
+	float _h0; //é”Ÿå‰¿è¯§æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
+	float _delta;
+	float _v1, _v2; // é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·å¾®é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·çŠ¶æ€é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·å¾®é”Ÿæ–¤æ‹·é”Ÿæ–¤æ‹·
+	float _z[3]; // é”Ÿè„šè®¹æ‹·é”Ÿæ–¤æ‹·æ¯
 
-	float _v1, _v2; // ¸ú×ÙÎ¢·ÖÆ÷×´Ì¬Á¿¼°ÆäÎ¢·ÖÏî
-	float _z[3]; // ÈÅ¶¯ĞÅÏ¢
-
-	//float _integer;
-	//float _b01;
-	float _e1, _e2;
+	float _e0,_e1, _e2;
+	float _eso_error;
 	float _disturb, _disturb_u/*, _disturb_u_reg*/;
 	float _u;
-
-	uint8_t  _level;  //ÏµÍ³½×´Î
-	//uint8_t  _n;
-	//bool _not_use_px4;
-	//bool _use_td;
-
+	//uint8_t  _level;
 };
+#endif
 
-#endif /* AC_ESO_H_ */
+
+
+
+

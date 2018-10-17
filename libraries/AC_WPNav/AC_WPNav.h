@@ -151,6 +151,95 @@ public:
 
     /// advance_wp_target_along_track_xy - move target location along track from origin to destination except z
     bool advance_wp_target_along_track_xy(float dt);
+
+    bool advance_u_turn(float dt){
+
+    	Vector3f target_vel = _pos_control.get_vel_target();
+        // ramp angular velocity to maximum
+        if (_angular_vel < _angular_vel_max) {
+            _angular_vel += fabsf(_angular_accel) * dt;
+            _angular_vel = MIN(_angular_vel, _angular_vel_max);
+        }
+        if (_angular_vel > _angular_vel_max) {
+            _angular_vel -= fabsf(_angular_accel) * dt;
+            _angular_vel = MAX(_angular_vel, _angular_vel_max);
+        }
+
+        // update the target angle and total angle traveled
+        float angle_change = _angular_vel * dt;
+        _angle += angle_change;
+        //_angle = wrap_PI(_angle);
+
+        // calculate target position
+        Vector3f target;
+        if(_cw_flag){//顺时序 cw
+        //target.x = _center.x + _radius * cosf(_angle_offset-_angle);
+        //target.y = _center.y - _radius * sinf(_angle_offset-_angle);
+        target.x = _center.x + _radius * cosf(_angle_offset+_angle);
+        target.y = _center.y + _radius * sinf(_angle_offset+_angle);
+        target.z = _pos_control.get_alt_target();
+        }
+        else{//逆时针 ccw
+            //target.x = _center.x + _radius * cosf(_angle_offset+_angle);
+            //target.y = _center.y - _radius * sinf(_angle_offset+_angle);
+            target.x = _center.x + _radius * cosf(_angle_offset-_angle);
+            target.y = _center.y + _radius * sinf(_angle_offset-_angle);
+            target.z = _pos_control.get_alt_target();
+        }
+
+        // update position controller target
+        _pos_control.set_xy_target(target.x, target.y);
+
+        // 机头方向朝与速度方向一致
+        if (!is_zero(target_vel.x) && !is_zero(target_vel.y)) {
+             set_yaw_cd(RadiansToCentiDegrees(atan2f(target_vel.y,target_vel.x)));
+        }else{
+		Vector3f curr_pos = _inav.get_position();
+		set_yaw_cd(RadiansToCentiDegrees(atan2f(target.y - curr_pos.y,target.x - curr_pos.x)));
+		}
+
+        if(_angle >= M_PI) {
+        	_flags.reached_destination = true;
+        	_mode = false;
+        }
+    	return true;
+    }
+    // direc:true cw, false ccw;
+    void set_u_turn(const Vector3f center, float direc, float radius, bool cw_flag, bool offset){
+    	_center = center;
+    	_radius = radius;
+    	_cw_flag = cw_flag;
+    	_angle = 0;
+
+        // calculate max velocity based on waypoint speed ensuring we do not use more than half our max acceleration for accelerating towards the center of the circle
+        float velocity_max = MIN(_pos_control.get_speed_xy(), safe_sqrt(0.5f*_pos_control.get_accel_xy()*_radius));
+
+        // angular_velocity in radians per second
+        _angular_vel_max = velocity_max/_radius;
+        //_angular_vel_max = constrain_float(ToRad(_rate),-_angular_vel_max,_angular_vel_max);
+
+        // angular_velocity in radians per second
+        _angular_accel = _pos_control.get_accel_xy()/_radius;
+
+    	//_angle_vel = _pos_control
+    	//Vector3f cur_vel = _inav.get_velocity();
+    	//float vel = norm(cur_vel.x, cur_vel.y);
+    	//_angular_vel = vel / radius;
+        _angular_vel = _angular_vel_max * 0.25f;
+        _angle_offset = (offset)?M_PI:0.0f;
+        _angle_offset = _angle_offset + direc - M_PI * 0.5f;
+
+    	_flags.reached_destination = false;
+    	_flags.fast_waypoint = true;
+    	_mode = true;
+    }
+    void set_zigzag_mode(bool mode){
+    	_mode = mode;
+    }
+
+    float get_track_covered_zigzag(){
+    	return _track_covered;
+    }
     /*********************************************************************************/
 
     // check_wp_leash_length - check recalc_wp_leash flag and calls calculate_wp_leash_length() if necessary
@@ -316,4 +405,15 @@ protected:
     AP_Int8     _rangefinder_use;
     bool        _rangefinder_healthy = false;
     float       _rangefinder_alt_cm = 0.0f;
+
+    bool       _mode; // u or line
+    bool       _cw_flag;
+    float      _track_covered = 0.0f;
+    float      _radius;
+    float      _angular_vel;
+    float      _angle;
+    float      _angular_vel_max;
+    float      _angular_accel;
+    float      _angle_offset;
+    Vector3f   _center;
 };

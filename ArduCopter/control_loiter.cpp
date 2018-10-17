@@ -9,6 +9,19 @@ bool Copter::loiter_init(bool ignore_checks)
 {
     if (position_ok() || ignore_checks) {
 
+    	// fix loiter glitch
+        if (!copter.failsafe.radio) {
+            float target_roll, target_pitch;
+            // apply SIMPLE mode transform to pilot inputs
+            update_simple_mode();
+         // set target to current position	            // convert pilot input to lean angles
+            get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max());
+             // process pilot's roll and pitch input
+            loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch, G_Dt);
+        } else {
+            // clear out pilot desired acceleration in case radio failsafe event occurs and we do not switch to RTL for some reason
+            loiter_nav->clear_pilot_desired_acceleration();
+        }
         // set target to current position
     	loiter_nav->init_target();
 
@@ -111,7 +124,7 @@ void Copter::loiter_run()
     // helicopters are held on the ground until rotor speed runup has finished
     bool takeoff_triggered = (ap.land_complete && (target_climb_rate > 0.0f) && motors->rotor_runup_complete());
 #else
-    bool takeoff_triggered = ap.land_complete && (target_climb_rate > 0.0f);
+    bool takeoff_triggered = ap.land_complete && (target_climb_rate > 0.0f) && ap.motor_spin_all;
 #endif
 
     // Loiter State Machine Determination

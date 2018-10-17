@@ -163,19 +163,21 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("THR_MIX_MAN", 6, AC_AttitudeControl_Multi, _thr_mix_man, AC_ATTITUDE_CONTROL_MAN_DEFAULT),
 
-    AP_GROUPINFO("ADRC_BT0",    7, AC_AttitudeControl_Multi, _adrc_beta0, 400.0f),
+    /*AP_GROUPINFO("ADRC_BT0",    7, AC_AttitudeControl_Multi, _adrc_beta0, 400.0f),
     AP_GROUPINFO("ADRC_BT1", 8, AC_AttitudeControl_Multi, _adrc_beta1, 9000.0f),
     AP_GROUPINFO("ADRC_BT2", 9, AC_AttitudeControl_Multi, _adrc_beta2, 10000.0f),
     AP_GROUPINFO("ADRC_R0",    10, AC_AttitudeControl_Multi, _adrc_r0, 80000.0f),
     AP_GROUPINFO("ADRC_B0",    11, AC_AttitudeControl_Multi, _adrc_b01, 9000.0f),
 
     AP_GROUPINFO("ADRC_TN",   12, AC_AttitudeControl_Multi, _adrc_tao_n, 1000),
-    AP_GROUPINFO("ADRC_HN",   13, AC_AttitudeControl_Multi, _adrc_h_n, 5),
-    AP_GROUPINFO("ADRC_USE", 14, AC_AttitudeControl_Multi, _adrc_use, 0),
+    AP_GROUPINFO("ADRC_HN",   13, AC_AttitudeControl_Multi, _adrc_h_n, 5),*/
+    //AP_GROUPINFO("ADRC_USE", 14, AC_AttitudeControl_Multi, _adrc_use, 0),
 
-    AP_SUBGROUPINFO(_adrc_rate_roll, "ADRC_R_", 15, AC_AttitudeControl_Multi, AC_ADRC),
-    AP_SUBGROUPINFO(_adrc_rate_pitch, "ADRC_P_", 16, AC_AttitudeControl_Multi, AC_ADRC),
-    AP_SUBGROUPINFO(_adrc_rate_yaw, "ADRC_Y_", 17, AC_AttitudeControl_Multi, AC_ADRC),
+    AP_SUBGROUPINFO(_adrc_rate_roll, "ADRC_R_", 7, AC_AttitudeControl_Multi, AC_ADRC),
+    AP_SUBGROUPINFO(_adrc_rate_pitch, "ADRC_P_", 8, AC_AttitudeControl_Multi, AC_ADRC),
+    AP_SUBGROUPINFO(_adrc_rate_yaw, "ADRC_Y_", 9, AC_AttitudeControl_Multi, AC_ADRC),
+
+    AP_SUBGROUPINFO(_indi_rate, "INDI_", 10, AC_AttitudeControl_Multi, AC_INDI),
 
     AP_GROUPEND
 };
@@ -186,9 +188,10 @@ AC_AttitudeControl_Multi::AC_AttitudeControl_Multi(AP_AHRS_View &ahrs, const AP_
     _pid_rate_roll(AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_I, AC_ATC_MULTI_RATE_RP_D, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt),
     _pid_rate_pitch(AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_I, AC_ATC_MULTI_RATE_RP_D, AC_ATC_MULTI_RATE_RP_IMAX, AC_ATC_MULTI_RATE_RP_FILT_HZ, dt),
     _pid_rate_yaw(AC_ATC_MULTI_RATE_YAW_P, AC_ATC_MULTI_RATE_YAW_I, AC_ATC_MULTI_RATE_YAW_D, AC_ATC_MULTI_RATE_YAW_IMAX, AC_ATC_MULTI_RATE_YAW_FILT_HZ, dt),
-    _adrc_rate_roll(dt, AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_D),
-    _adrc_rate_pitch(dt, AC_ATC_MULTI_RATE_RP_P, AC_ATC_MULTI_RATE_RP_D),
-    _adrc_rate_yaw(dt, AC_ATC_MULTI_RATE_YAW_P, AC_ATC_MULTI_RATE_YAW_D)
+    _adrc_rate_roll(dt, 0.15, 0.0018, 0.75f, 1.5f),
+    _adrc_rate_pitch(dt, 0.15, 0.0018, 0.75f, 1.5f),
+    _adrc_rate_yaw(dt, 2, 0.0008, 0.75f, 1.5f),
+    _indi_rate(motors, 1.0f/dt)
 {
     AP_Param::setup_object_defaults(this, var_info);
 }
@@ -272,12 +275,19 @@ void AC_AttitudeControl_Multi::rate_controller_run()
     // move throttle vs attitude mixing towards desired (called from here because this is conveniently called on every iteration)
     update_throttle_rpy_mix();
 
+    if(_indi_rate.get_enable() >0){
+        Vector3f output;
+        _indi_rate.stabilization_indi_run(_ahrs.get_gyro_raw_latest(), _attitude_error, output);
+        _motors.set_roll(output.x);
+        _motors.set_pitch(output.y);
+        _motors.set_yaw(output.z);
+    }else {
     Vector3f gyro_latest = _ahrs.get_gyro_latest();
     /*_motors.set_roll(rate_target_to_motor_roll(gyro_latest.x, _rate_target_ang_vel.x));
     _motors.set_pitch(rate_target_to_motor_pitch(gyro_latest.y, _rate_target_ang_vel.y));
     _motors.set_yaw(rate_target_to_motor_yaw(gyro_latest.z, _rate_target_ang_vel.z));*/
 
-    if(_adrc_use > 0) {
+    if(_adrc_rate_roll.get_enable() > 0 && _adrc_rate_pitch.get_enable() > 0 && _adrc_rate_yaw.get_enable() > 0) {
 	_motors.set_roll(_adrc_rate_roll.control_adrc(_rate_target_ang_vel.x, gyro_latest.x, _motors.get_roll(), 1));
     _motors.set_pitch(_adrc_rate_pitch.control_adrc(_rate_target_ang_vel.y, gyro_latest.y, _motors.get_pitch(), 1));
     _motors.set_yaw(_adrc_rate_yaw.control_adrc(_rate_target_ang_vel.z, gyro_latest.z, _motors.get_yaw(), 1));
@@ -288,6 +298,8 @@ void AC_AttitudeControl_Multi::rate_controller_run()
         _motors.set_pitch(rate_target_to_motor_pitch(gyro_latest.y, _rate_target_ang_vel.y));
         _motors.set_yaw(rate_target_to_motor_yaw(gyro_latest.z, _rate_target_ang_vel.z));
     }
+    }
+
     control_monitor_update();
 }
 

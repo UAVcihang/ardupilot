@@ -84,7 +84,7 @@ void Copter::auto_disarm_check()
     uint32_t disarm_delay_ms = 1000*constrain_int16(g.disarm_delay, 0, 127);
 
     // 如果飞机已经解锁，但解锁手势未松开，则退出
-    if(motors->armed() && !arm_gesture_release){
+    if(motors->armed() && (!arm_gesture_release || !ap.motor_spin_all)){
     	auto_disarm_begin = tnow_ms;
     	return;
     }
@@ -130,6 +130,7 @@ void Copter::auto_disarm_check()
     if ((tnow_ms-auto_disarm_begin) >= disarm_delay_ms) {
         init_disarm_motors();
         auto_disarm_begin = tnow_ms;
+
     }
 }
 
@@ -138,6 +139,11 @@ void Copter::auto_disarm_check()
 bool Copter::init_arm_motors(bool arming_from_gcs)
 {
     static bool in_arm_motors = false;
+
+    // exit immediately if compass calibrating
+    if(compass.is_calibrating()) {
+    	return false;
+    }
 
     // exit immediately if already in this function
     if (in_arm_motors) {
@@ -281,6 +287,9 @@ void Copter::init_disarm_motors()
     hal.util->set_soft_armed(false);
 
     ap.in_arming_delay = false;
+
+    //
+    ap.motor_spin_all = false;
 }
 
 // motors_output - send output to motors library which will adjust and send to ESCs and servos
@@ -298,7 +307,7 @@ void Copter::motors_output()
 #endif
 
     // Update arming delay state
-    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > ARMING_DELAY_SEC*1.0e3f || control_mode == THROW)) {
+    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > (ARMING_DELAY_SEC+1)*1.0e3f || control_mode == THROW)) {
         ap.in_arming_delay = false;
     }
 
@@ -314,18 +323,28 @@ void Copter::motors_output()
     // check if we are performing the motor test
     if (ap.motor_test) {
         motor_test_output();
-    } else {
-        bool interlock = motors->armed() && !ap.in_arming_delay && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
+    }
+    /*else if(!ap.motor_spin_all){
+    	motor_armed_spin_order();
+    }*/
+    else {
+        bool interlock = motors->armed() /*&& !ap.in_arming_delay*/ && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
         if (!motors->get_interlock() && interlock) {
             motors->set_interlock(true);
+            motors->set_motor_enabled(0);
             Log_Write_Event(DATA_MOTORS_INTERLOCK_ENABLED);
         } else if (motors->get_interlock() && !interlock) {
             motors->set_interlock(false);
             Log_Write_Event(DATA_MOTORS_INTERLOCK_DISABLED);
         }
 
+        if(interlock && ap.in_arming_delay){
+        	motor_armed_spin_order();
+        }
+        //else{
         // send output signals to motors
         motors->output();
+        //}
     }
 
     // push all channels

@@ -2,9 +2,10 @@
 
 /// @file    AC_AttitudeControl_Multi.h
 /// @brief   ArduCopter attitude control library
-
+//#include "airframe.h"
 #include "AC_AttitudeControl.h"
 #include <AP_Motors/AP_MotorsMulticopter.h>
+#include <AC_INDI/AC_INDI.h>
 
 // default rate controller PID gains
 #ifndef AC_ATC_MULTI_RATE_RP_P
@@ -38,7 +39,6 @@
  # define AC_ATC_MULTI_RATE_YAW_FILT_HZ     2.5f
 #endif
 
-
 class AC_AttitudeControl_Multi : public AC_AttitudeControl {
 public:
 	AC_AttitudeControl_Multi(AP_AHRS_View &ahrs, const AP_Vehicle::MultiCopter &aparm, AP_MotorsMulticopter& motors, float dt);
@@ -57,13 +57,17 @@ public:
     AC_ADRC& get_rate_yaw_adrc() { return _adrc_rate_yaw; }
 
 	void set_rate_adrc() {
-		_adrc_rate_roll.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
-        _adrc_rate_pitch.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
-        _adrc_rate_yaw.init(_adrc_r0, _adrc_b01, _adrc_beta0, _adrc_beta1, _adrc_beta2, _adrc_tao_n, _adrc_h_n);
+		_adrc_rate_roll.init();
+        _adrc_rate_pitch.init();
+        _adrc_rate_yaw.init();
+	}
+
+	void set_rate_indi() {
+		_indi_rate.init();
 	}
 
 	bool use_adrc() {
-		if(_adrc_use > 0) {
+		if(_adrc_rate_roll.get_enable() > 0 && _adrc_rate_pitch.get_enable() > 0 && _adrc_rate_yaw.get_enable() > 0) {
 			return true;
 		}
 		return false;
@@ -117,20 +121,20 @@ protected:
     AP_Float              _thr_mix_max;     // throttle vs attitude control prioritisation used during active flight (higher values mean we prioritise attitude control over throttle)
 
     // for test adrc
-    AP_Float            _adrc_r0;
+    /*AP_Float            _adrc_r0;
     AP_Float            _adrc_b01;
     AP_Float            _adrc_beta0;
     AP_Float            _adrc_beta1;
-    AP_Float            _adrc_beta2;
+    AP_Float            _adrc_beta2;*/
 
-    AP_Int16             _adrc_tao_n;
-    AP_Int8             _adrc_use;
-    AP_Int8             _adrc_h_n;
+    //AP_Int16             _adrc_tao_n;
+    //AP_Int8             _adrc_use;
+    //AP_Int8             _adrc_h_n;
 
 
     AC_ADRC            _adrc_rate_roll;
 	AC_ADRC            _adrc_rate_pitch;
 	AC_ADRC            _adrc_rate_yaw;
 
-
+	AC_INDI            _indi_rate;
 };

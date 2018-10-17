@@ -39,11 +39,17 @@ public:
 
     T apply(const T &sample, const struct biquad_params &params);
     void reset();
+
+    T get_filter_out_1(void) const;
+    T get_filter_out_2(void) const;
     static void compute_params(float sample_freq, float cutoff_freq, biquad_params &ret);
     
 private:
     T _delay_element_1;
     T _delay_element_2;
+    // 滤波后的历史值
+    T _filter_out_1;
+    T _filter_out_2;
 };
 
 template <class T>
@@ -59,6 +65,9 @@ public:
     float get_sample_freq(void) const;
     T apply(const T &sample);
     void reset(void);
+    // 获取滤波后的历史值
+    T get_filter_out_1(void) const;
+    T get_filter_out_2(void) const;
 
 protected:
     struct DigitalBiquadFilter<T>::biquad_params _params;

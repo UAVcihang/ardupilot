@@ -2121,7 +2121,9 @@ void DataFlash_Class::Log_Write_ADRC(uint8_t msg_type, AC_ADRC &adrc_rate)
 		z2              : adrc_rate.get_z2(),
 		z3              : adrc_rate.get_z3(),
 		e1              : adrc_rate.get_e1(),
-		e2              : adrc_rate.get_e2()
+		e2              : adrc_rate.get_e2(),
+		eso_e           : adrc_rate.get_eso_error(),
+		u               : adrc_rate.get_u()
 	};
 
 	WriteBlock(&pkt, sizeof(pkt));

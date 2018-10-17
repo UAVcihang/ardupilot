@@ -28,6 +28,11 @@ bool Copter::zigzag_init(bool ignore_checks)
         	zigzag_mode = Zigzag_Auto;
         	zigzag_auto_complete_state = (zigzag_waypoint_state.bp_mode != Zigzag_None);
 
+        	Vector3f v_A2B  = zigzag_waypoint_state.vB_pos - zigzag_waypoint_state.vA_pos;
+        	zigzag_dist = v_A2B.length();
+        	//if()
+        	// zigzag_waypoint_state.area = (zigzag_waypoint_state.bp_mode == Zigzag_None)?0:zigzag_waypoint_state.area;
+
         	zigzag_waypoint_state.flag = zigzag_waypoint_state.flag << 1;
         	zigzag_waypoint_state.flag += 1;
 			
@@ -52,14 +57,28 @@ bool Copter::zigzag_init(bool ignore_checks)
         	else{
         	wp_nav->set_wp_destination(current_loc);
         	}*/
-        	wp_nav->set_fast_waypoint(false);
+
         }
         else {
         	GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Zigzag manual");
         	zigzag_mode = Zigzag_Manual;
         	zigzag_auto_complete_state = false;
 
+        	zigzag_waypoint_state.area = 0.0f;
 #if 1
+        	// fix loiter glitch
+            if (!copter.failsafe.radio) {
+                float target_roll, target_pitch;
+                // apply SIMPLE mode transform to pilot inputs
+                //update_simple_mode();
+             // set target to current position	            // convert pilot input to lean angles
+                get_pilot_desired_lean_angles(target_roll, target_pitch, loiter_nav->get_angle_max_cd(), attitude_control->get_althold_lean_angle_max());
+                 // process pilot's roll and pitch input
+                loiter_nav->set_pilot_desired_acceleration(target_roll, target_pitch, G_Dt);
+            } else {
+                // clear out pilot desired acceleration in case radio failsafe event occurs and we do not switch to RTL for some reason
+                loiter_nav->clear_pilot_desired_acceleration();
+            }
             // initialize's loiter position and velocity on xy-axes from current pos and velocity
             loiter_nav->init_target();
 
@@ -165,6 +184,7 @@ void Copter::zigzag_run()
             zigzag_set_destination();
 			//wp_nav->set_fast_waypoint(true);
             zigzag_auto_complete_state = false;
+            wp_nav->set_fast_waypoint(true);
     		//}while(zigzag_waypoint_state.action);
     	}
     	else{
@@ -248,6 +268,7 @@ void Copter::zigzag_manual_control()
 // zigzag_auto auto run
 void Copter::zigzag_auto_control()
 {
+	static uint32_t last_of_update = 0;
     // process pilot's yaw input
 	float target_roll = 0, target_pitch = 0;
     float target_yaw_rate = 0;
@@ -281,7 +302,8 @@ void Copter::zigzag_auto_control()
     			zigzag_rc_state = RC_LEFT;
     		break;
     	case RC_RIGHT:
-    		if(is_zero(target_roll)) {
+    		// 浮点型 判断0 经常进入不了
+    		if(/*is_zero(target_roll)*/ (fabs(target_roll) < aparm.angle_max / 15.0f)) {
     			//mission.set_ab_direction(AP_Mission::AB_RIGHT);
     			zigzag_waypoint_state.direct = -1;
     			//zigzag_waypoint_state.action = true;
@@ -290,7 +312,7 @@ void Copter::zigzag_auto_control()
 
     		break;
     	case RC_LEFT:
-    		if(is_zero(target_roll)) {
+    		if(/*is_zero(target_roll)*/(fabs(target_roll) < aparm.angle_max / 15.0f)) {
     			//mission.set_ab_direction(AP_Mission::AB_LEFT);
     			zigzag_waypoint_state.direct = 1;
     			//zigzag_waypoint_state.action = true;
@@ -305,7 +327,7 @@ void Copter::zigzag_auto_control()
     		return;
     	}
     }
-    else if(!is_zero(target_roll) || !is_zero(target_pitch) /*|| !is_zero(target_yaw_rate)*/){
+    else if(fabs(target_roll) > aparm.angle_max / 15.0f || fabs(target_pitch) > aparm.angle_max / 15.0f/*!is_zero(target_roll) || !is_zero(target_pitch)*/ /*|| !is_zero(target_yaw_rate)*/){
     	zigzag_mode = Zigzag_Manual;
     	zigzag_auto_complete_state = false;
 #if 1
@@ -319,8 +341,15 @@ void Copter::zigzag_auto_control()
     // set motors to full range
     motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
 
+    // u-turn
+    //if(zigzag_waypoint_state.bp_mode == Zigzag_None && zigzag_waypoint_state.index >1 && (zigzag_waypoint_state.index %2 != 0)){
+        // run circle controller
+    //    circle_nav->update();
+    //}else{
+    	// fly line
     // run waypoint controller to update xy
     failsafe_terrain_set_status(wp_nav->update_zigzag_wpnav());
+    //}
 
     // adjust climb rate using rangefinder
     if (rangefinder_alt_ok()) {
@@ -341,7 +370,8 @@ void Copter::zigzag_auto_control()
     // call attitude controller
     if (auto_yaw_mode == AUTO_YAW_HOLD) {
         // roll & pitch from waypoint controller, yaw rate from pilot
-        attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), /*target_yaw_rate*/0/*, get_smoothing_gain()*/);
+        //attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), /*target_yaw_rate*/0/*, get_smoothing_gain()*/);
+    	attitude_control->input_euler_angle_roll_pitch_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), wp_nav->get_yaw(), true/*, get_smoothing_gain()*/);
     }
     else if (auto_yaw_mode == AUTO_YAW_RATE) {
         // roll & pitch from waypoint controller, yaw rate from mavlink command or mission item
@@ -352,8 +382,18 @@ void Copter::zigzag_auto_control()
         attitude_control->input_euler_angle_roll_pitch_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_heading(), true/*, get_smoothing_gain()*/);
     }
 
+    uint32_t now = AP_HAL::millis();
+    if((now - last_of_update) > 1000 && (zigzag_waypoint_state.index % 2) == 0 && zigzag_waypoint_state.index!=0 ){
+    	last_of_update = now;
+    	zigzag_waypoint_state.area =  (zigzag_dist * zigzag_waypoint_state.index - wp_nav->get_track_covered_zigzag()) * zigzag_waypoint_state.width * 0.0001 * 0.5;
+    }
+
     if(zigzag_waypoint_state.direct != 0 && ((zigzag_waypoint_state.flag & 0x05) == 0x05)) {
-    zigzag_auto_complete_state = wp_nav->reached_wp_destination();
+        //if(zigzag_waypoint_state.bp_mode == Zigzag_None && zigzag_waypoint_state.index >1 && (zigzag_waypoint_state.index %2 != 0)){
+        //	zigzag_auto_complete_state = (circle_nav->get_angle_total() >= M_PI);
+       // }else{
+        	zigzag_auto_complete_state = wp_nav->reached_wp_destination();
+        //}
     if(zigzag_change_yaw && verify_yaw()) {
     	//verify_yaw();
     	zigzag_change_yaw = false;
@@ -376,7 +416,9 @@ void Copter::zigzag_auto_control()
 
 void Copter::zigzag_set_destination(/*Location_Class& next_dest*/)
 {
+
 	Vector3f next;
+	Vector3f center;
 	Vector3f cur_pos;
 	Vector3f v_BP2Next;
 	Vector3f v_BP2Next_uint;
@@ -432,8 +474,33 @@ void Copter::zigzag_set_destination(/*Location_Class& next_dest*/)
 		zigzag_calculate_next_dest(next, zigzag_waypoint_state.index);
 		//sprintf(buf, "zigzag Bx:%.2f By:%.2f next x:%.2f  y:%.2f",  zigzag_waypoint_state.vB_pos.x, zigzag_waypoint_state.vB_pos.y, next.x, next.y);
 		//GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, buf);
-		wp_nav->set_wp_destination(next, false);
+		// 从第一个点开始走U形,并调整机头，机头朝向与飞行方向一致
+		if(/*zigzag_waypoint_state.index>1 && */(zigzag_waypoint_state.fly_direc < Zigzag_A2B )){
+			Vector3f ziazag_point_prev = pos_control->get_pos_target();
+			center.x  = (ziazag_point_prev.x + next.x) * 0.5f;
+			center.y  = (ziazag_point_prev.y + next.y) * 0.5f;
+			center.z  = next.z;
 
+			//int8_t sign = (zigzag_bearing<18000)?-1:1;
+			bool pi_flag = (zigzag_waypoint_state.direct > 0)?true:false;
+			bool cw_flag;
+			if(zigzag_waypoint_state.direct > 0){
+				cw_flag = (zigzag_waypoint_state.fly_direc == Zigzag_A2A)?true:false;
+			}
+			else{
+				cw_flag = (zigzag_waypoint_state.fly_direc == Zigzag_A2A)?false:true;
+			}
+			//bool cw_flag = (zigzag_waypoint_state.direct > 0) & (zigzag_waypoint_state.fly_direc == Zigzag_A2A);
+			//cw_flag = cw_flag & (zigzag_waypoint_state.fly_direc == Zigzag_A2A);
+			wp_nav->set_u_turn(center, radians(zigzag_bearing * 0.01f), zigzag_waypoint_state.width * 0.5f, cw_flag, pi_flag);
+			//circle_nav->init(center);
+			//sprintf(buf, "zigzag Bx:%.2f By:%.2f next x:%.2f  y:%.2f",  zigzag_waypoint_state.vB_pos.x, zigzag_waypoint_state.vB_pos.y, next.x, next.y);
+			//GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, buf);
+		}else{
+
+		wp_nav->set_wp_destination(next, false);
+		}
+		//ziazag_point_prev = next;
 		// switch sprayer run on or off
 		sprayer.run(zigzag_waypoint_state.index%2 == 0);
 		//GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Set next wp");
@@ -453,6 +520,7 @@ void Copter::zigzag_set_destination(/*Location_Class& next_dest*/)
 		//zigzag_waypoint_state.index--;
 		//zigzag_waypoint_state.action = false;
 		zigzag_waypoint_state.flag = 0x05;
+		wp_nav->set_zigzag_mode(false);
 		// stop sprayer
 		sprayer.run(false);
 		break;
@@ -502,6 +570,7 @@ void Copter::zigzag_set_destination(/*Location_Class& next_dest*/)
 		}
 		wp_nav->set_wp_destination(next, false);
 
+		wp_nav->set_zigzag_mode(false);
 		// stop sprayer
 		sprayer.run(false);
 		//zigzag_waypoint_state.bp_mode = Zigzag_None;
@@ -528,6 +597,13 @@ void Copter::zigzag_calculate_next_dest(/*Location_Class& dest*/Vector3f& next, 
 	switch(index%4)
 	{
 	case 1:
+		c1 = v_A2B.x * zigzag_waypoint_state.vB_pos.x + v_A2B.y * zigzag_waypoint_state.vB_pos.y;
+		c2 = zigzag_waypoint_state.direct * dist_AB * zigzag_waypoint_state.width * ((index+1)>>1);
+		c2 = c2 + zigzag_waypoint_state.vB_pos.x * v_A2B.y - zigzag_waypoint_state.vB_pos.y * v_A2B.x;
+		a2 = v_A2B.y;
+		b2 = -v_A2B.x;
+		zigzag_waypoint_state.fly_direc = Zigzag_B2B;
+		break;
 	case 0:
 		//a1 = v_A2B.x;
 		//b1 = v_A2B.y;
@@ -536,8 +612,16 @@ void Copter::zigzag_calculate_next_dest(/*Location_Class& dest*/Vector3f& next, 
 		c2 = c2 + zigzag_waypoint_state.vB_pos.x * v_A2B.y - zigzag_waypoint_state.vB_pos.y * v_A2B.x;
 		a2 = v_A2B.y;
 		b2 = -v_A2B.x;
+		zigzag_waypoint_state.fly_direc = Zigzag_A2B;
 		break;
 	case 2:
+		c1 = v_A2B.x * zigzag_waypoint_state.vA_pos.x + v_A2B.y * zigzag_waypoint_state.vA_pos.y;
+		c2 = zigzag_waypoint_state.direct * dist_AB * zigzag_waypoint_state.width * ((index+1)>>1);
+		c2 = c2 + zigzag_waypoint_state.vA_pos.x * v_A2B.y - zigzag_waypoint_state.vA_pos.y * v_A2B.x;
+		a2 = v_A2B.y;
+		b2 = -v_A2B.x;
+		zigzag_waypoint_state.fly_direc = Zigzag_B2A;
+		break;
 	case 3:
 		//a1 = v_A2B.x;
 		//b1 = v_A2B.y;
@@ -546,8 +630,13 @@ void Copter::zigzag_calculate_next_dest(/*Location_Class& dest*/Vector3f& next, 
 		c2 = c2 + zigzag_waypoint_state.vA_pos.x * v_A2B.y - zigzag_waypoint_state.vA_pos.y * v_A2B.x;
 		a2 = v_A2B.y;
 		b2 = -v_A2B.x;
+		zigzag_waypoint_state.fly_direc = Zigzag_A2A;
 		break;
 	}
+
+	/*if((index%2) == 0){
+		zigzag_waypoint_state.area = dist_AB * zigzag_waypoint_state.width * 0.0001 * 0.5 * (index - 2); // 作业面积 单位为m2
+	}*/
 
 	//Vector3f next;
 	float denominator = (a1 * b2 - a2 * b1);
@@ -617,6 +706,7 @@ bool Copter::zigzag_record_point(bool aPoint)
 		//zigzag_waypoint_state.b_hasbeen_defined = false;
 		zigzag_waypoint_state.a_hasbeen_defined = true;
 
+		zigzag_waypoint_state.area = 0.0f;
 		ret = true;
 	}
 	// before record B point, A point must be recorded
@@ -624,6 +714,7 @@ bool Copter::zigzag_record_point(bool aPoint)
 		zigzag_waypoint_state.vB_pos = inertial_nav.get_position();
 		zigzag_waypoint_state.b_pos = current_loc;
 		zigzag_waypoint_state.b_hasbeen_defined = true;
+		zigzag_waypoint_state.area = 0.0f;
 		ret = true;
 		//zigzag_waypoint_state.a_hasbeen_defined = true;
 	}
@@ -739,6 +830,9 @@ void Copter::zigzag_load(void)
 	zigzag_waypoint_state.b_pos.get_vector_xy_from_origin_NEU(zigzag_waypoint_state.vB_pos);
 	zigzag_waypoint_state.bp_pos.get_vector_xy_from_origin_NEU(zigzag_waypoint_state.vBP_pos);
 	zigzag_waypoint_state.vBP_pos.z = zigzag_waypoint_state.bp_pos.alt;
+
+	//加载作业面积
+
 	//sprintf(buf, "zigzag BPx:%.2f BPy:%.2f BPz:%.2f",  zigzag_waypoint_state.vBP_pos.x, zigzag_waypoint_state.vBP_pos.y, zigzag_waypoint_state.vBP_pos.z);
 	//GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, buf);
 }

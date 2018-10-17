@@ -26,7 +26,7 @@ struct {
 */
 void Copter::read_multiaux_switches()
 {
-	uint32_t tnow_ms = millis();
+	//uint32_t tnow_ms = millis();
 
 	// calculate position of aux switch
 	int8_t switch_position;
@@ -98,14 +98,69 @@ void Copter::read_multiaux_switches()
  *   低---高---低---高---低---高---低
  *   5通道来回切换3次进入校磁
  * */
-void Copter::compass_cal_status(int8_t switch_position)
+void Copter::compass_cal_status(int8_t switch_position, uint32_t tnow_ms)
 {
-	// 如果已经解锁 或 正在校磁 直接退出
-	if(motors->armed() || ap.compass_calibration/*compass.is_calibrating()*/)
+	//uint32_t tnow_ms = AP_HAL::millis();
+	// 如果已经解锁 或 正在校磁 直接退出，或5通道位于中间
+	if(motors->armed() || ap.compass_calibration || (switch_position == AUX_SWITCH_MIDDLE)/*compass.is_calibrating()*/)
 	{
 		return;
 	}
 
+	if(rc5_status >0 && (tnow_ms - rc5_last_trigger_ms) > 500) {
+		rc5_status = -1;
+	}
+	switch(rc5_status) {
+	case -1:
+		if(switch_position == AUX_SWITCH_LOW) {
+			// rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+	case 0: // low status
+		if(switch_position == AUX_SWITCH_HIGH) {
+			rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+
+	case 1: // HIGH status
+		if(switch_position == AUX_SWITCH_LOW) {
+			rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+
+	case 2: // low status
+		if(switch_position == AUX_SWITCH_HIGH) {
+			rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+
+	case 3: // HIGH status
+		if(switch_position == AUX_SWITCH_LOW) {
+			rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+
+	case 4: // low status
+		if(switch_position == AUX_SWITCH_HIGH) {
+			rc5_last_trigger_ms = tnow_ms;
+			rc5_status++;
+		}
+		break;
+
+	case 5: // HIGH status
+		if(switch_position == AUX_SWITCH_LOW) {
+			//rc5_last_trigger_ms = tnow_ms;
+			//rc5_status++;
+			ap.compass_calibration = true;
+			rc5_status = -1;
+		}
+		break;
+	}
 
 }
 
@@ -164,6 +219,8 @@ void Copter::read_control_switch()
     }
 
     control_switch_state.last_switch_position = switch_position;
+
+    compass_cal_status((switch_position>4)?AUX_SWITCH_HIGH:(switch_position<1)?AUX_SWITCH_LOW:AUX_SWITCH_MIDDLE, tnow_ms);
 }
 
 // check_if_auxsw_mode_used - Check to see if any of the Aux Switches are set to a given mode.

@@ -42,6 +42,28 @@ void Copter::failsafe_radio_off_event()
     Log_Write_Error(ERROR_SUBSYSTEM_FAILSAFE_RADIO, ERROR_CODE_FAILSAFE_RESOLVED);
 }
 
+void Copter::failsafe_drug_event(void)
+{
+	//if(failsafe.battery)
+	if(motors->armed()) {
+        if (should_disarm_on_failsafe()) {
+            init_disarm_motors();
+        } else {
+        	if(control_mode == AUTO){
+        		set_mode_RTL_or_land_with_pause(MODE_REASON_DRUG_FAILSAFE);
+        	}
+        	else if(control_mode == ZIGZAG) {
+        		set_mode_RTL_or_land_with_pause(MODE_REASON_DRUG_FAILSAFE);
+        		zigzag_set_bp_mode(Zigzag_DrugNone);
+        	}
+        }
+	}
+
+    // 无药量时 灯闪烁与无电量时一样
+    set_failsafe_battery(true);
+    gcs_send_text(MAV_SEVERITY_WARNING,"No Drug");
+}
+
 void Copter::failsafe_battery_event(void)
 {
     // return immediately if low battery event has already been triggered

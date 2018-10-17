@@ -86,6 +86,8 @@ public:
 
 	virtual void set_rate_adrc() = 0;
 
+	virtual void set_rate_indi() = 0;
+
     // get the roll acceleration limit in centidegrees/s/s or radians/s/s
     float get_accel_roll_max() const { return _accel_roll_max; }
     float get_accel_roll_max_radss() const { return radians(_accel_roll_max*0.01f); }
@@ -277,6 +279,11 @@ public:
     // Calculates the body frame angular velocities to follow the target attitude
     void attitude_controller_run_quat();
 
+    // Nonlinear attitude control
+    void attitude_nonlinear_controller_run_quat();
+
+    void nonlinear_control_quat(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot);
+
     // sanity check parameters.  should be called once before take-off
     virtual void parameter_sanity_check() {}
 
@@ -387,6 +394,8 @@ protected:
     // This represents the angular velocity in radians per second in the body frame, used in the angular
     // velocity controller.
     Vector3f            _rate_target_ang_vel;
+
+    Vector3f            _attitude_error;
 
     // This represents a quaternion attitude error in the body frame, used for inertial frame reset handling.
     Quaternion          _attitude_ang_error;

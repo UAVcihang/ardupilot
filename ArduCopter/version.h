@@ -3,7 +3,7 @@
 #include "ap_version.h"
 
 //#define THISFIRMWARE "APM:Copter V3.5.5"
-#define THISFIRMWARE "Cihang-MG-V0.0.2"
+#define THISFIRMWARE "Cihang-MG-V0.0.3"
 #define FIRMWARE_VERSION 3,5,5,FIRMWARE_VERSION_TYPE_OFFICIAL
 
 #ifndef GIT_VERSION

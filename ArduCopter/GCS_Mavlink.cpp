@@ -53,6 +53,7 @@ NOINLINE void Copter::send_heartbeat(mavlink_channel_t chan)
     case CIRCLE:
     case POSHOLD:
     case BRAKE:
+    case ZIGZAG:
         base_mode |= MAV_MODE_FLAG_GUIDED_ENABLED;
         // note that MAV_MODE_FLAG_AUTO_ENABLED does not match what
         // APM does in any mode, as that is defined as "system finds its own goal
@@ -211,13 +212,14 @@ void NOINLINE Copter::send_current_waypoint(mavlink_channel_t chan)
 void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
 {
     // exit immediately if rangefinder is disabled
-    if (!rangefinder.has_data_orient(ROTATION_PITCH_270)) {
+    /*if (!rangefinder.has_data_orient(ROTATION_PITCH_270)) {
         return;
-    }
+    }*/
+	//Vector3f att = ukf.get_attidute();
     mavlink_msg_rangefinder_send(
             chan,
-            rangefinder.distance_cm_orient(ROTATION_PITCH_270) * 0.01f,
-            rangefinder.voltage_mv_orient(ROTATION_PITCH_270) * 0.001f);
+            /*rangefinder.distance_cm_orient(ROTATION_PITCH_270) * 0.01f*/flowermeter.get_period() * 1.0f,
+            /*rangefinder.voltage_mv_orient(ROTATION_PITCH_270) * 0.001f*/flowermeter.get_flowerVel() * 1.0f);
 }
 #endif
 

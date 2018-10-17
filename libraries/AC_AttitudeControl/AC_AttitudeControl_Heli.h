@@ -40,9 +40,9 @@ public:
         _pid_rate_roll(AC_ATC_HELI_RATE_RP_P, AC_ATC_HELI_RATE_RP_I, AC_ATC_HELI_RATE_RP_D, AC_ATC_HELI_RATE_RP_IMAX, AC_ATC_HELI_RATE_RP_FILT_HZ, dt, AC_ATC_HELI_RATE_RP_FF),
         _pid_rate_pitch(AC_ATC_HELI_RATE_RP_P, AC_ATC_HELI_RATE_RP_I, AC_ATC_HELI_RATE_RP_D, AC_ATC_HELI_RATE_RP_IMAX, AC_ATC_HELI_RATE_RP_FILT_HZ, dt, AC_ATC_HELI_RATE_RP_FF),
         _pid_rate_yaw(AC_ATC_HELI_RATE_YAW_P, AC_ATC_HELI_RATE_YAW_I, AC_ATC_HELI_RATE_YAW_D, AC_ATC_HELI_RATE_YAW_IMAX, AC_ATC_HELI_RATE_YAW_FILT_HZ, dt, AC_ATC_HELI_RATE_YAW_FF),
-        _adrc_rate_roll(dt, 0.135f, 0.0036),
-        _adrc_rate_pitch(dt, 0.135f, 0.0036),
-        _adrc_rate_yaw(dt, 0.18f, 0.0036),
+        _adrc_rate_roll(dt, 0.135f, 0.0036, 0.75f, 1.5f, 1.0f),
+        _adrc_rate_pitch(dt, 0.135f, 0.0036, 0.75f, 1.5f, 1.0f),
+        _adrc_rate_yaw(dt, 0.18f, 0.0036, 0.75f, 1.5f, 1.0f),
         pitch_feedforward_filter(AC_ATTITUDE_HELI_RATE_RP_FF_FILTER),
         roll_feedforward_filter(AC_ATTITUDE_HELI_RATE_RP_FF_FILTER),
         yaw_velocity_feedforward_filter(AC_ATTITUDE_HELI_RATE_Y_VFF_FILTER)
@@ -72,6 +72,9 @@ public:
 	void set_rate_adrc() {
 	}
 
+	void set_rate_indi() {
+
+	}
 	bool use_adrc() {
 		return false;
 	}

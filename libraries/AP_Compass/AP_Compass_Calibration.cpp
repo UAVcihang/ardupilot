@@ -159,6 +159,8 @@ Compass::_accept_calibration(uint8_t i, bool force)
         Vector3f ofs, diag, offdiag;
         cal.get_calibration(ofs, diag, offdiag, force);
 
+        //hal.console->printf("----Compass cal success-----\n");
+        //hal.console->printf("Compass ID %d diag_x:%.4f, diag_y:%.4f, diag_z:%.4f, odig_x:%.4f, odig_y:%.4f, odig_z:%.4f\n", i, diag.x, diag.y, diag.z, offdiag.x, offdiag.y, offdiag.z);
         set_and_save_offsets(i, ofs);
         set_and_save_diagonals(i,diag);
         set_and_save_offdiagonals(i,offdiag);

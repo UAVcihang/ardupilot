@@ -545,6 +545,8 @@ struct PACKED log_ADRC {
 	float z3;
 	float e1;
 	float e2;
+	float eso_e;
+	float u;
 
 };
 
@@ -981,11 +983,11 @@ Format characters in the format string for binary log messages
     { LOG_BEACON_MSG, sizeof(log_Beacon), \
       "BCN", "QBBfffffff",  "TimeUS,Health,Cnt,D0,D1,D2,D3,PosX,PosY,PosZ" }, \
     { LOG_ADRCR_MSG, sizeof(log_ADRC), \
-      "ADR", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2" }, \
+      "ADR", "Qfffffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2,eso_e,u" }, \
     { LOG_ADRCP_MSG, sizeof(log_ADRC),   \
-      "ADP", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2"}, \
+      "ADP", "Qfffffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2,eso_e,u"}, \
     { LOG_ADRCY_MSG, sizeof(log_ADRC),   \
-      "ADY", "Qfffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2"}
+      "ADY", "Qfffffffff", "TimeUS,x1,x2,z1,z2,z3,e1,e2,eso_e,u"}
 
 // messages for more advanced boards
 #define LOG_EXTRA_STRUCTURES \

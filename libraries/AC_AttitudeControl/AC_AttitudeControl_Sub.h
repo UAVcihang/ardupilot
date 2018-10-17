@@ -42,6 +42,9 @@ public:
 	void set_rate_adrc() {
 	}
 
+	void set_rate_indi() {
+
+	}
 	bool use_adrc(){
 		return false;
 	}

@@ -25,7 +25,7 @@
 *          18-12-2003
 *          06-06-2004
 *
-* © 2003, This code is provided "as is" and you can use it freely as long as
+*  2003, This code is provided "as is" and you can use it freely as long as
 * credit is given to Bill Perone in the application it is used in
 *
 * Notes:
@@ -158,7 +158,7 @@ public:
     // check if all elements are zero
     bool is_zero(void) const { return (fabsf(x) < FLT_EPSILON) && (fabsf(y) < FLT_EPSILON) && (fabsf(z) < FLT_EPSILON); }
 
-
+    //float norm(void) const {}
     // rotate by a standard rotation
     void rotate(enum Rotation rotation);
     void rotate_inverse(enum Rotation rotation);

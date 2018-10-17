@@ -138,6 +138,12 @@
 // 测试adrc
 #include <AC_ADRC/AC_ADRC.h>
 
+// 测试 ukf
+#include <AC_UKF/AC_UKF.h>
+
+// 流量计 接AUX5口 检测pwm个数
+#include <AC_Flowermeter/AC_Flowermeter.h>
+
 
 class Copter : public AP_HAL::HAL::Callbacks {
 public:
@@ -216,6 +222,8 @@ private:
     NavEKF2 EKF2{&ahrs, barometer, rangefinder};
     NavEKF3 EKF3{&ahrs, barometer, rangefinder};
     AP_AHRS_NavEKF ahrs{ins, barometer, gps, rangefinder, EKF2, EKF3, AP_AHRS_NavEKF::FLAG_ALWAYS_USE_EKF};
+    // UKF 实例
+    AC_UKF ukf{&ahrs, barometer, MAIN_LOOP_SECONDS*2.0f};
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     SITL::SITL sitl;
@@ -223,6 +231,8 @@ private:
 
     // MQTT
     AC_MQTT mqtt{&ahrs};
+    // 流量计
+    AC_Flowermeter flowermeter;
     // Mission library
     AP_Mission mission;
 
@@ -285,6 +295,7 @@ private:
             uint8_t in_arming_delay         : 1; // 24      // true while we are armed but waiting to spin motors
             uint8_t initialised_params      : 1; // 25      // true when the all parameters have been initialised. we cannot send parameters to the GCS until this is done
             uint8_t compass_calibration     : 1; // 26      // 来回切换5通道3次则为true
+            uint8_t motor_spin_all          : 1; // 27      // 所有电机都转起来了则为true;
         };
         uint32_t value;
     } ap;
@@ -391,12 +402,15 @@ private:
     bool          zigzag_auto_complete_state; // set to true if the copter arrived a/b position
     bool          zigzag_change_yaw;
     float zigzag_bearing;
+    float zigzag_dist;
+    //Vector3f ziazag_point_prev;
     struct {
         bool a_hasbeen_defined;     //true if point A has been defined
         bool b_hasbeen_defined;     //true if point B has been defined
         //bool action;                // true if get the command to run to next point
         //bool breakPoint_defined;   // breakpoint
         ZigzagBPMode bp_mode;
+        ZigzagFlyDirec fly_direc;
         int8_t direct;             // direction of ab point; 1: right, -1:left
         uint16_t width;              // zigzag width cm
         int16_t index;             //
@@ -404,13 +418,28 @@ private:
         uint16_t flag;             // 0b101
         //uint32_t last_exit_time_ms; // last exit zigzag mode time
 
+        // 计算作业面积
+        float area;
+
         Location_Class a_pos;      // use absolute position
         Location_Class b_pos;
         Location_Class bp_pos;
         Vector3f vA_pos;          // convert location to vector
         Vector3f vB_pos;
         Vector3f vBP_pos;
+
+
+
     } zigzag_waypoint_state;
+
+    // 5通道校磁
+    int8_t rc5_status;
+    uint32_t rc5_last_trigger_ms;
+
+    // 解锁时电机转动序号
+    uint8_t motor_spin_seq;
+    uint8_t motor_spin_loop_count;
+    uint8_t motor_num;
 
     // Guided
     GuidedMode guided_mode;  // controls which controller is run (pos or vel)
@@ -677,11 +706,14 @@ private:
     static const AP_Param::Info var_info[];
     static const struct LogStructure log_structure[];
 
+	// 更新UKF
+	void update_ukf();
+
     // 获取最大下降速度
     uint16_t get_pilot_speed_dn();
 
     // 读取5通道的状态，判断是否要进行校磁
-    void compass_cal_status(int8_t switch_position);
+    void compass_cal_status(int8_t switch_position, uint32_t tnow_ms);
     void compass_accumulate(void);
     void compass_cal_update(void);
     void barometer_accumulate(void);
@@ -703,6 +735,8 @@ private:
     void update_super_simple_bearing(bool force_update);
     void read_AHRS(void);
     void update_altitude();
+    // 流量计更新
+    void update_flowermeter();
     void set_home_state(enum HomeState new_home_state);
     bool home_is_set();
     void set_auto_armed(bool b);
@@ -714,6 +748,8 @@ private:
     void set_land_complete_maybe(bool b);
     void update_using_interlock();
     void set_motor_emergency_stop(bool b);
+    // 获取期望速度，rc sticks control speed
+    void get_pilot_desired_speed(float &vel_rgt, float &vel_fwd, float vel_max);
     //float get_smoothing_gain();
     //void get_pilot_desired_lean_angles(float roll_in, float pitch_in, float &roll_out, float &pitch_out, float angle_max);
     void get_pilot_desired_lean_angles(float &roll_out, float &pitch_out, float angle_max, float angle_limit);
@@ -1033,6 +1069,8 @@ private:
     void failsafe_terrain_check();
     void failsafe_terrain_set_status(bool data_ok);
     void failsafe_terrain_on_event();
+    // 药量用完failsafe
+    void failsafe_drug_event(void);
     void gpsglitch_check();
     void set_mode_RTL_or_land_with_pause(mode_reason_t reason);
     void update_events();
@@ -1070,6 +1108,7 @@ private:
     void landinggear_update();
     void update_notify();
     void motor_test_output();
+    void motor_armed_spin_order();
     bool mavlink_motor_test_check(mavlink_channel_t chan, bool check_rc);
     uint8_t mavlink_motor_test_start(mavlink_channel_t chan, uint8_t motor_seq, uint8_t throttle_type, uint16_t throttle_value, float timeout_sec);
     void motor_test_stop();

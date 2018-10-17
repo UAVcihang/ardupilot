@@ -77,3 +77,11 @@ Vector3f AP_AHRS_View::get_gyro_latest(void) const {
     gyro_latest.rotate(rotation);
     return gyro_latest;
 }
+
+
+// return a smoothed and corrected gyro vector using the latest ins raw data (which may not have been consumed by the EKF yet)
+Vector3f AP_AHRS_View::get_gyro_raw_latest(void) const {
+    Vector3f gyro_latest = ahrs.get_gyro_raw_latest();
+    gyro_latest.rotate(rotation);
+    return gyro_latest;
+}

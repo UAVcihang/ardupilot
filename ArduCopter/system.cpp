@@ -308,6 +308,9 @@ void Copter::init_ardupilot()
     // initialise mission library
     mission.init();
 
+    // 流量计
+    flowermeter.init();
+
     // initialise DataFlash library
     DataFlash.set_mission(&mission);
     DataFlash.setVehicle_Startup_Log_Writer(FUNCTOR_BIND(&copter, &Copter::Log_Write_Vehicle_Startup_Messages, void));
@@ -345,6 +348,25 @@ void Copter::init_ardupilot()
     // disable safety if requested
     BoardConfig.init_safety();    
 
+	// UKF初始化
+	//ukf.altUkfInit();
+    ukf.init();
+
+    // 只支持4 6 8轴
+    switch(g2.frame_class.get()){
+    case 1:
+    	motor_num = 4;
+    	break;
+    case 2:
+    	motor_num = 6;
+    	break;
+    case 3:
+    	motor_num = 8;
+    	break;
+    default:
+    	motor_num = 0;
+    	break;
+    }
     cliSerial->printf("\nReady to FLY ");
 
     // flag that initialisation has completed
@@ -668,7 +690,8 @@ void Copter::allocate_motors(void)
         AP_HAL::panic("Unable to allocate AttitudeControl");
     }
     AP_Param::load_object_from_eeprom(attitude_control, ac_var_info);
-        
+    attitude_control->set_rate_adrc();
+    attitude_control->set_rate_indi();
     /*pos_control = new AC_PosControl(*ahrs_view, inertial_nav, *motors, *attitude_control,
                                     g.p_alt_hold, g.p_vel_z, g.pid_accel_z,
                                     g.p_pos_xy, g.pi_vel_xy);*/

@@ -9,12 +9,45 @@
 #define MOTOR_TEST_PWM_MIN              800     // min pwm value accepted by the test
 #define MOTOR_TEST_PWM_MAX              2200    // max pwm value accepted by the test
 #define MOTOR_TEST_TIMEOUT_MS_MAX       30000   // max timeout is 30 seconds
+//#define MOTOR_SPIN_INTERVAL_MS
 
 static uint32_t motor_test_start_ms = 0;        // system time the motor test began
 static uint32_t motor_test_timeout_ms = 0;      // test will timeout this many milliseconds after the motor_test_start_ms
 static uint8_t motor_test_seq = 0;              // motor sequence number of motor being tested
 static uint8_t motor_test_throttle_type = 0;    // motor throttle type (0=throttle percentage, 1=PWM, 2=pilot throttle channel pass-through)
 static uint16_t motor_test_throttle_value = 0;  // throttle to be sent to motor, value depends upon it's type
+
+// motor_armed_spin_order -- after armed, motor spin in order
+void Copter::motor_armed_spin_order()
+{
+	// 如果未解锁或所有电机都转动起来了 则直接返回
+	if (!motors->armed() || ap.motor_spin_all || motor_spin_seq >= motor_num) {
+		return;
+	}
+	motor_spin_loop_count++;
+	if(motor_spin_loop_count != 200){
+		return;
+	}
+	motors->set_motor_enabled(motor_spin_seq, true);
+	motor_spin_seq++;
+	motor_spin_loop_count = 0;
+
+	if(motor_spin_seq == motor_num){
+		ap.motor_spin_all = true;
+		motor_spin_seq = 0;
+	}
+
+    /*int16_t pwm_min = motors->get_pwm_output_min();
+    int16_t pwm_max = motors->get_pwm_output_max();
+    int16_t pwm = pwm_min + (pwm_max - pwm_min) * motors->get_mot_spin_min();
+	motors->output_test(motor_spin_seq, pwm);
+
+	if(motor_spin_seq == motor_num){
+		ap.motor_spin_all = true;
+		motor_spin_seq = 0;
+	}*/
+}
+
 
 // motor_test_output - checks for timeout and sends updates to motors objects
 void Copter::motor_test_output()

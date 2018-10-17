@@ -40,6 +40,54 @@ public:
     {
     }
 
+
+    /**
+     * Quaternion from two vectors
+     * Generates shortest rotation from source to destination vector
+     *
+     * @param dst destination vector (no need to normalize)
+     * @param src source vector (no need to normalize)
+     * @param eps epsilon threshold which decides if a value is considered zero
+     */
+    Quaternion(const Vector3f &src, const Vector3f &dst, const float eps = float(1e-5))
+    {
+        Quaternion &q = *this;
+        Vector3f cr = src % dst;
+        float dt = src * dst;
+        /* If the two vectors are parallel, cross product is zero
+         * If they point opposite, the dot product is negative */
+        float cr_norm = sqrtf(cr * cr);
+        if (/*cr.norm()*/cr_norm < eps && dt < 0) {
+            cr.x = fabsf(src.x);
+            cr.y = fabsf(src.y);
+            cr.z = fabsf(src.z);
+
+            if (cr.x < cr.y) {
+                if (cr.x < cr.z) {
+                    cr = Vector3f(1, 0, 0);
+                } else {
+                    cr = Vector3f(0, 0, 1);
+                }
+            } else {
+                if (cr.y < cr.z) {
+                    cr = Vector3f(0, 1, 0);
+                } else {
+                    cr = Vector3f(0, 0, 1);
+                }
+            }
+            q.q1 = 0.0f;
+            cr = src % cr ;//src.cross(cr);
+        } else {
+            /* Half-Way Quaternion Solution */
+            //q(0) = src.dot(dst) + sqrt(src.norm_squared() * dst.norm_squared());
+        	q.q1 = src * dst + sqrtf(src * src + dst * dst);
+        }
+        q.q2 = cr.x;
+        q.q3 = cr.y;
+        q.q4 = cr.z;
+        q.normalize();
+    }
+
     // function call operator
     void operator()(const float _q1, const float _q2, const float _q3, const float _q4)
     {
@@ -134,4 +182,7 @@ public:
     Quaternion operator*(const Quaternion &v) const;
     Quaternion &operator*=(const Quaternion &v);
     Quaternion operator/(const Quaternion &v) const;
+
+    Quaternion operator*(const float scalar) const;
+    //Quaternion operator*=(const float scalar) const;
 };

@@ -138,6 +138,13 @@ Vector3f AP_AHRS::get_gyro_latest(void) const
     return get_ins().get_gyro(primary_gyro) + get_gyro_drift();
 }
 
+// return a smoothed and corrected gyro vector using the latest ins data (which may not have been consumed by the EKF yet)
+Vector3f AP_AHRS::get_gyro_raw_latest(void) const
+{
+    uint8_t primary_gyro = get_primary_gyro_index();
+    return get_ins().get_raw_gyro(primary_gyro) + get_gyro_drift();
+}
+
 // return airspeed estimate if available
 bool AP_AHRS::airspeed_estimate(float *airspeed_ret) const
 {

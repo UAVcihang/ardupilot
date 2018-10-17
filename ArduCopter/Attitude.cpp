@@ -207,6 +207,46 @@ float Copter::get_pilot_desired_throttle(int16_t throttle_control, float thr_mid
     return throttle_out;
 }
 
+// 获取期望速度 rc stick -> speed
+void Copter::get_pilot_desired_speed(float &vel_rgt, float &vel_fwd, float vel_max){
+    // fetch roll and pitch inputs
+	vel_rgt = channel_roll->get_control_in() / (float)ROLL_PITCH_YAW_INPUT_MAX;
+	vel_fwd = channel_pitch->get_control_in() / (float)ROLL_PITCH_YAW_INPUT_MAX;
+
+	// 确保输入不在死区中 死区默认为0.1
+	vel_rgt = constrain_float(vel_rgt, -1.0f, 1.0f);
+	vel_fwd = constrain_float(vel_fwd, -1.0f, 1.0f);
+
+	float out = (vel_rgt - sign(vel_rgt) * 0.1f) / (1 - 0.1f); // 0.1f 可以用一个参数来表示
+	if(fabsf(vel_rgt) > 0.1f){
+		vel_rgt = out;
+	}else{
+		vel_rgt = 0.0f;
+	}
+	out = (vel_fwd - sign(vel_fwd) * 0.1f) / (1 - 0.1f); // 0.1f 可以用一个参数来表示
+	if(fabsf(vel_fwd) > 0.1f){
+		vel_fwd = out;
+	}else{
+		vel_fwd = 0.0f;
+	}
+
+	// expo 依照get_pilot_desired_yaw_rate函数写的
+	expo(vel_rgt, 0.0f); // 0.0f 可以用参数表示
+	expo(vel_fwd, 0.0f); // 0.0f 可以用参数表示
+
+	/* saturate such that magnitude is never larger than 1 */
+	float vel_length = norm(vel_rgt, vel_fwd);
+	if(vel_length > 1.0f) {
+		vel_rgt /= vel_length;
+		vel_fwd /= vel_length;
+	}
+
+	vel_rgt *= vel_max;
+	vel_fwd *= vel_max;
+	vel_fwd = -vel_fwd;
+
+}
+
 // get_pilot_desired_climb_rate - transform pilot's throttle input to climb rate in cm/s
 // without any deadzone at the bottom
 float Copter::get_pilot_desired_climb_rate(float throttle_control)

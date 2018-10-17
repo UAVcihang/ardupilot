@@ -366,3 +366,25 @@ Quaternion Quaternion::operator/(const Quaternion &v) const
     ret.q4 = (rquat0*quat3 - rquat1*quat2 + rquat2*quat1 - rquat3*quat0);
     return ret;
 }
+
+Quaternion Quaternion::operator*(const float scalar) const
+{
+    Quaternion ret;
+    const float &w1 = q1;
+    const float &x1 = q2;
+    const float &y1 = q3;
+    const float &z1 = q4;
+
+    //float w2 = v.q1;
+    //float x2 = v.q2;
+    //float y2 = v.q3;
+    //float z2 = v.q4;
+
+    ret.q1 = scalar * w1 ;//w1*w2 - x1*x2 - y1*y2 - z1*z2;
+    ret.q2 = scalar * x1 ;//w1*x2 + x1*w2 + y1*z2 - z1*y2;
+    ret.q3 = scalar * y1 ;//w1*y2 - x1*z2 + y1*w2 + z1*x2;
+    ret.q4 = scalar * z1 ;//w1*z2 + x1*y2 - y1*x2 + z1*w2;
+
+    return ret;
+}
+

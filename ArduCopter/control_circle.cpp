@@ -40,7 +40,7 @@ void Copter::circle_run()
     pos_control->set_accel_z(g.pilot_accel_z);
     
     // if not auto armed or motor interlock not enabled set throttle to zero and exit immediately
-    if (!motors->armed() || !ap.auto_armed || ap.land_complete || !motors->get_interlock()) {
+    if (!motors->armed() || !ap.auto_armed || ap.land_complete || !motors->get_interlock() || !ap.motor_spin_all) {
         // To-Do: add some initialisation of position controllers
 #if FRAME_CONFIG == HELI_FRAME  // Helicopters always stabilize roll/pitch/yaw
         // call attitude controller

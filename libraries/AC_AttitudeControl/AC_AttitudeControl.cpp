@@ -173,6 +173,11 @@ void AC_AttitudeControl::relax_attitude_controllers()
     get_rate_roll_pid().reset_I();
     get_rate_pitch_pid().reset_I();
     get_rate_yaw_pid().reset_I();
+
+    // reset adrc
+    get_rate_roll_adrc().reset();
+    get_rate_roll_adrc().reset();
+    get_rate_roll_adrc().reset();
 }
 
 void AC_AttitudeControl::reset_rate_controller_I_terms()
@@ -180,6 +185,11 @@ void AC_AttitudeControl::reset_rate_controller_I_terms()
     get_rate_roll_pid().reset_I();
     get_rate_pitch_pid().reset_I();
     get_rate_yaw_pid().reset_I();
+
+    // reset adrc
+    get_rate_roll_adrc().reset();
+    get_rate_roll_adrc().reset();
+    get_rate_roll_adrc().reset();
 }
 
 // The attitude controller works around the concept of the desired attitude, target attitude
@@ -237,7 +247,8 @@ void AC_AttitudeControl::input_quaternion(Quaternion attitude_desired_quat)
     }
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
 }
 
 // Command an euler roll and pitch angle and an euler yaw rate with angular velocity feedforward and smoothing
@@ -288,7 +299,9 @@ void AC_AttitudeControl::input_euler_angle_roll_pitch_euler_rate_yaw(float euler
     }
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
+
 }
 
 // Command an euler roll, pitch and yaw angle with angular velocity feedforward and smoothing
@@ -346,7 +359,8 @@ void AC_AttitudeControl::input_euler_angle_roll_pitch_yaw(float euler_roll_angle
     }
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
 }
 
 // Command an euler roll, pitch, and yaw rate with angular velocity feedforward and smoothing
@@ -388,7 +402,8 @@ void AC_AttitudeControl::input_euler_rate_roll_pitch_yaw(float euler_roll_rate_c
     }
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
 }
 
 // Command an angular velocity with angular velocity feedforward and smoothing
@@ -425,7 +440,8 @@ void AC_AttitudeControl::input_rate_bf_roll_pitch_yaw(float roll_rate_bf_cds, fl
     }
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
 }
 
 // Command an angular velocity with angular velocity smoothing using rate loops only with no attitude loop stabilization
@@ -519,7 +535,76 @@ void AC_AttitudeControl::input_angle_step_bf_roll_pitch_yaw(float roll_angle_ste
     _attitude_target_ang_vel = Vector3f(0.0f, 0.0f, 0.0f);
 
     // Call quaternion attitude controller
-    attitude_controller_run_quat();
+    //attitude_controller_run_quat();
+    attitude_nonlinear_controller_run_quat();
+}
+
+// Refer to paper: Nonlinear quadrocopter attitude control technical report
+void AC_AttitudeControl::attitude_nonlinear_controller_run_quat()
+{
+    // Retrieve quaternion vehicle attitude
+    // TODO add _ahrs.get_quaternion()
+    Quaternion attitude_vehicle_quat;
+    attitude_vehicle_quat.from_rotation_matrix(_ahrs.get_rotation_body_to_ned());
+
+    // Compute attitude error
+    Vector3f attitude_error_vector;
+    //thrust_heading_rotation_angles(_attitude_target_quat, attitude_vehicle_quat, attitude_error_vector, _thrust_error_angle);
+    nonlinear_control_quat(_attitude_target_quat, attitude_vehicle_quat, attitude_error_vector, _thrust_error_angle);
+
+    // Compute the angular velocity target from the attitude error
+    _rate_target_ang_vel = update_ang_vel_target_from_att_error(attitude_error_vector);
+    _attitude_error = Vector3f(attitude_error_vector.x, attitude_error_vector.y, attitude_error_vector.z);
+
+    // 不懂？网上的说明：
+    /*
+     * The only time these lines have effect is when there is yaw/pitch angle error AND the aircraft is rotating around the z-axis (yaw).
+     *  But lifting/dropping the part of the aircraft that that is about to enter the spot that previously was in error,
+     *  the oscillations will be reduced.  Notice that the correction is applied at an 90deg offset from the error (X error ===> Y rate, and Y error ===> X rate).
+     * */
+    // Add feedforward term that attempts to ensure that roll and pitch errors rotate with the body frame rather than the reference frame.
+    // todo: this should probably be a matrix that couples yaw as well.
+    _rate_target_ang_vel.x += attitude_error_vector.y * _ahrs.get_gyro().z;
+    _rate_target_ang_vel.y += -attitude_error_vector.x * _ahrs.get_gyro().z;
+
+    ang_vel_limit(_rate_target_ang_vel, radians(_ang_vel_roll_max), radians(_ang_vel_pitch_max), radians(_ang_vel_yaw_max));
+
+    // 直接计算当前姿态与目标状态角度差 目标角速度绕其旋转转到机体坐标系下
+    // Add the angular velocity feedforward, rotated into vehicle frame
+    Quaternion attitude_target_ang_vel_quat = Quaternion(0.0f, _attitude_target_ang_vel.x, _attitude_target_ang_vel.y, _attitude_target_ang_vel.z);
+    Quaternion to_to_from_quat = attitude_vehicle_quat.inverse() * _attitude_target_quat;
+    // 旋转后 desired_ang_vel_quat.q0 = 0;
+    Quaternion desired_ang_vel_quat = to_to_from_quat.inverse()*attitude_target_ang_vel_quat*to_to_from_quat;
+
+    // Correct the thrust vector and smoothly add feedforward and yaw input
+    if(_thrust_error_angle > AC_ATTITUDE_THRUST_ERROR_ANGLE*2.0f){
+        _rate_target_ang_vel.z = _ahrs.get_gyro().z;
+    }else if(_thrust_error_angle > AC_ATTITUDE_THRUST_ERROR_ANGLE){
+        float feedforward_scalar = (1.0f - (_thrust_error_angle-AC_ATTITUDE_THRUST_ERROR_ANGLE)/AC_ATTITUDE_THRUST_ERROR_ANGLE);
+        _rate_target_ang_vel.x += desired_ang_vel_quat.q2*feedforward_scalar;
+        _rate_target_ang_vel.y += desired_ang_vel_quat.q3*feedforward_scalar;
+        _rate_target_ang_vel.z += desired_ang_vel_quat.q4;
+        _rate_target_ang_vel.z = _ahrs.get_gyro().z*(1.0-feedforward_scalar) + _rate_target_ang_vel.z*feedforward_scalar;
+    } else {
+        _rate_target_ang_vel.x += desired_ang_vel_quat.q2;
+        _rate_target_ang_vel.y += desired_ang_vel_quat.q3;
+        _rate_target_ang_vel.z += desired_ang_vel_quat.q4;
+    }
+
+    if (_rate_bf_ff_enabled) {
+        // rotate target and normalize
+        Quaternion attitude_target_update_quat;
+        attitude_target_update_quat.from_axis_angle(Vector3f(_attitude_target_ang_vel.x * _dt, _attitude_target_ang_vel.y * _dt, _attitude_target_ang_vel.z * _dt));
+        _attitude_target_quat = _attitude_target_quat * attitude_target_update_quat;
+        _attitude_target_quat.normalize();
+    }
+
+    // ensure Quaternions stay normalized
+    _attitude_target_quat.normalize();
+
+    // Record error to handle EKF resets
+    _attitude_ang_error = attitude_vehicle_quat.inverse() * _attitude_target_quat;
+
 }
 
 // Calculates the body frame angular velocities to follow the target attitude
@@ -537,6 +622,12 @@ void AC_AttitudeControl::attitude_controller_run_quat()
     // Compute the angular velocity target from the attitude error
     _rate_target_ang_vel = update_ang_vel_target_from_att_error(attitude_error_vector);
 
+    // 不懂？网上的说明：
+    /*
+     * The only time these lines have effect is when there is yaw/pitch angle error AND the aircraft is rotating around the z-axis (yaw).
+     *  But lifting/dropping the part of the aircraft that that is about to enter the spot that previously was in error,
+     *  the oscillations will be reduced.  Notice that the correction is applied at an 90deg offset from the error (X error ===> Y rate, and Y error ===> X rate).
+     * */
     // Add feedforward term that attempts to ensure that roll and pitch errors rotate with the body frame rather than the reference frame.
     // todo: this should probably be a matrix that couples yaw as well.
     _rate_target_ang_vel.x += attitude_error_vector.y * _ahrs.get_gyro().z;
@@ -544,9 +635,11 @@ void AC_AttitudeControl::attitude_controller_run_quat()
 
     ang_vel_limit(_rate_target_ang_vel, radians(_ang_vel_roll_max), radians(_ang_vel_pitch_max), radians(_ang_vel_yaw_max));
 
+    // 直接计算当前姿态与目标状态角度差 目标角速度绕其旋转转到机体坐标系下
     // Add the angular velocity feedforward, rotated into vehicle frame
     Quaternion attitude_target_ang_vel_quat = Quaternion(0.0f, _attitude_target_ang_vel.x, _attitude_target_ang_vel.y, _attitude_target_ang_vel.z);
     Quaternion to_to_from_quat = attitude_vehicle_quat.inverse() * _attitude_target_quat;
+    // 旋转后 desired_ang_vel_quat.q0 = 0;
     Quaternion desired_ang_vel_quat = to_to_from_quat.inverse()*attitude_target_ang_vel_quat*to_to_from_quat;
 
     // Correct the thrust vector and smoothly add feedforward and yaw input
@@ -579,25 +672,155 @@ void AC_AttitudeControl::attitude_controller_run_quat()
     _attitude_ang_error = attitude_vehicle_quat.inverse() * _attitude_target_quat;
 }
 
-// thrust_heading_rotation_angles - calculates two ordered rotations to move the att_from_quat quaternion to the att_to_quat quaternion.
-// The first rotation corrects the thrust vector and the second rotation corrects the heading vector.
-void AC_AttitudeControl::thrust_heading_rotation_angles(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot)
+void AC_AttitudeControl::nonlinear_control_quat(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot)
 {
+	/* calculate reduced desired attitude neglecting vehicle's yaw to prioritize roll and pitch */
+	// 目标姿态到I系的旋转
     Matrix3f att_to_rot_matrix; // rotation from the target body frame to the inertial frame.
     att_to_quat.rotation_matrix(att_to_rot_matrix);
+    // 目标姿态的Z轴在I系的映射
     Vector3f att_to_thrust_vec = att_to_rot_matrix*Vector3f(0.0f,0.0f,1.0f);
 
+    // 当前姿态到I系的旋转
     Matrix3f att_from_rot_matrix; // rotation from the current body frame to the inertial frame.
     att_from_quat.rotation_matrix(att_from_rot_matrix);
+    // 当前姿态的z轴在I系下的映射
     Vector3f att_from_thrust_vec = att_from_rot_matrix*Vector3f(0.0f,0.0f,1.0f);
-
+/*
     // the cross product of the desired and target thrust vector defines the rotation vector
+    // 叉乘
     Vector3f thrust_vec_cross = att_from_thrust_vec % att_to_thrust_vec;
 
+    //当前姿态与目标姿态z轴的角度误差角度 a.*b=|a|*|b|*cos(Ang) = cos(Ang)
     // the dot product is used to calculate the angle between the target and desired thrust vectors
     thrust_vec_dot = acosf(constrain_float(att_from_thrust_vec * att_to_thrust_vec,-1.0f,1.0f));
 
     // Normalize the thrust rotation vector
+    //当前姿态与目标姿态z轴的角度误差的正弦值 |a^b| = |a||b|sin(Ang) = sin(Ang)   0 <= Ang <= pi
+    float thrust_vector_length = thrust_vec_cross.length();
+    if(is_zero(thrust_vector_length) || is_zero(thrust_vec_dot)){
+        thrust_vec_cross = Vector3f(0,0,1);
+        thrust_vec_dot = 0.0f;
+    }else{
+        thrust_vec_cross /= thrust_vector_length;
+    }*/
+    // 四元数用归一化后的轴角来表示
+    Quaternion qd_red(att_from_thrust_vec, att_to_thrust_vec);
+    //qd_red.from_axis_angle(thrust_vec_cross, thrust_vec_dot);
+
+    if(abs(qd_red.q2) > (1.f - 1e-5f) || abs(qd_red.q3) > (1.f - 1e-5f)){
+    	qd_red = att_to_quat;
+    }
+    else
+    {
+    	/* transform rotation from current to desired thrust vector into a world frame reduced desired attitude */
+    	qd_red *= att_from_quat;  // qd_red = q * qd_red_b = q * inv(q) * qd_red_w * q = qd_red_w * q;  qd_red_w 为原始的qd_red
+    }
+
+	/* mix full and reduced desired attitude */
+    Quaternion q_mix = qd_red.inverse() * att_to_quat;
+    // 最短路径  q -q 代表相同的旋转
+    if(q_mix.q1 < 0){
+	q_mix = q_mix * -1.0f;
+    }
+	/* catch numerical problems with the domain of acosf and asinf */
+	q_mix.q1 = constrain_float(q_mix.q1, -1.f, 1.f);
+	q_mix.q4 = constrain_float(q_mix.q4, -1.f, 1.f);
+	// qd = qd_red * Quaternion(cosf(0.4 * acosf(q_mix.q1)), 0, 0, sinf(0.4 * asinf(q_mix.q4)));
+	Quaternion qd = qd_red * Quaternion(cosf(0.4 * acosf(q_mix.q1)), 0, 0, sinf(0.4 * asinf(q_mix.q4)));
+
+	/* quaternion attitude control law, qe is rotation from q to qd */
+	Quaternion qe = att_from_quat.inverse() * qd;
+
+	/* using sin(alpha/2) scaled rotation axis as attitude error (see quaternion definition by axis angle)
+	 * also taking care of the antipodal unit quaternion ambiguity */
+	//Vector3f eq = 2.f * math::signNoZero(qe(0)) * qe.img();
+	/*Vector3f eq(qe.q2, qe.q3, qe.q4);
+	eq *= 2;
+	if(qe.q1 < 0) {
+		eq *= -1;
+	}*/
+	//if(qe.q1 <0){
+	att_diff_angle.x = 2.0f *  qe.q2;
+	att_diff_angle.y = 2.0f *  qe.q3;
+	att_diff_angle.z = 2.0f *  qe.q4;
+	if(qe.q1 < 0){
+		att_diff_angle = att_diff_angle * -1.0f;
+	}
+	//}
+
+    // Rotate thrust_vec_correction_quat to the att_from frame
+    // 转到机体坐标系 pB = qI2B * pI * inv(qI2B)
+    // 等式右边的thrust_vec_correction_quat是参考系下的，左边为机体坐标系下
+    // att_from_quat 是机体坐标到参考坐标的旋转，所以qI2B = att_from_quat.inverse
+    //thrust_vec_correction_quat = att_from_quat.inverse()*thrust_vec_correction_quat*att_from_quat;
+
+    // calculate the remaining rotation required after thrust vector is rotated transformed to the att_from frame
+    // att_from_quat * thrust_vec_correction_quat * heading_quat = att_to_quat
+    // 当前姿态先对齐z轴，再旋转z轴得到期望姿态
+    //Quaternion yaw_vec_correction_quat = thrust_vec_correction_quat.inverse()*att_from_quat.inverse()*att_to_quat;
+
+    // calculate the angle error in x and y.
+    //Vector3f rotation;
+    //thrust_vec_correction_quat.to_axis_angle(rotation);
+    //att_diff_angle.x = rotation.x;
+    //att_diff_angle.y = rotation.y;
+
+    // calculate the angle error in z (x and y should be zero here).
+    //yaw_vec_correction_quat.to_axis_angle(rotation);
+    //att_diff_angle.z = rotation.z;
+
+    // Todo: Limit roll an pitch error based on output saturation and maximum error.
+
+    // Limit Yaw Error based on maximum acceleration - Update to include output saturation and maximum error.
+    // Currently the limit is based on the maximum acceleration using the linear part of the SQRT controller.
+    // This should be updated to be based on an angle limit, saturation, or unlimited based on user defined parameters.
+    /*if(!is_zero(_p_angle_yaw.kP()) && fabsf(att_diff_angle.z) > AC_ATTITUDE_ACCEL_Y_CONTROLLER_MAX_RADSS/_p_angle_yaw.kP()){
+        att_diff_angle.z = constrain_float(wrap_PI(att_diff_angle.z), -AC_ATTITUDE_ACCEL_Y_CONTROLLER_MAX_RADSS/_p_angle_yaw.kP(), AC_ATTITUDE_ACCEL_Y_CONTROLLER_MAX_RADSS/_p_angle_yaw.kP());
+        yaw_vec_correction_quat.from_axis_angle(Vector3f(0.0f,0.0f,att_diff_angle.z));
+        att_to_quat = att_from_quat*thrust_vec_correction_quat*yaw_vec_correction_quat;
+    }*/
+}
+
+// 先对齐z轴，再旋转z轴对齐x,y轴
+/*
+ *             | a11   a12  a13 | ---> e坐标系下x轴下的映射
+ *   R(b2e) =  | b11   b12  b13 | ---> e坐标系下y轴下的映射
+ *             | c11   c12  c13 | ---> e坐标系下z轴下的映射
+ *
+ *                ^     ^    ^
+ *                |     |    |
+ *             b系x轴          b系y轴    b系z轴
+ *
+ * */
+
+// thrust_heading_rotation_angles - calculates two ordered rotations to move the att_from_quat quaternion to the att_to_quat quaternion.
+// The first rotation corrects the thrust vector and the second rotation corrects the heading vector.
+// 通过最短路径对齐Z轴，再旋转z轴来对齐x y轴
+void AC_AttitudeControl::thrust_heading_rotation_angles(Quaternion& att_to_quat, const Quaternion& att_from_quat, Vector3f& att_diff_angle, float& thrust_vec_dot)
+{
+	// 目标姿态到I系的旋转
+    Matrix3f att_to_rot_matrix; // rotation from the target body frame to the inertial frame.
+    att_to_quat.rotation_matrix(att_to_rot_matrix);
+    // 目标姿态的Z轴在I系的映射
+    Vector3f att_to_thrust_vec = att_to_rot_matrix*Vector3f(0.0f,0.0f,1.0f);
+
+    // 当前姿态到I系的旋转
+    Matrix3f att_from_rot_matrix; // rotation from the current body frame to the inertial frame.
+    att_from_quat.rotation_matrix(att_from_rot_matrix);
+    // 当前姿态的z轴在I系下的映射
+    Vector3f att_from_thrust_vec = att_from_rot_matrix*Vector3f(0.0f,0.0f,1.0f);
+
+    // the cross product of the desired and target thrust vector defines the rotation vector
+    // 叉乘
+    Vector3f thrust_vec_cross = att_from_thrust_vec % att_to_thrust_vec;
+
+    //当前姿态与目标姿态z轴的角度误差角度 a.*b=|a|*|b|*cos(Ang) = cos(Ang)
+    // the dot product is used to calculate the angle between the target and desired thrust vectors
+    thrust_vec_dot = acosf(constrain_float(att_from_thrust_vec * att_to_thrust_vec,-1.0f,1.0f));
+
+    // Normalize the thrust rotation vector
+    //当前姿态与目标姿态z轴的角度误差的正弦值 |a^b| = |a||b|sin(Ang) = sin(Ang)   0 <= Ang <= pi
     float thrust_vector_length = thrust_vec_cross.length();
     if(is_zero(thrust_vector_length) || is_zero(thrust_vec_dot)){
         thrust_vec_cross = Vector3f(0,0,1);
@@ -605,13 +828,19 @@ void AC_AttitudeControl::thrust_heading_rotation_angles(Quaternion& att_to_quat,
     }else{
         thrust_vec_cross /= thrust_vector_length;
     }
+    // 四元数用归一化后的轴角来表示
     Quaternion thrust_vec_correction_quat;
     thrust_vec_correction_quat.from_axis_angle(thrust_vec_cross, thrust_vec_dot);
 
     // Rotate thrust_vec_correction_quat to the att_from frame
+    // 转到机体坐标系 pB = qI2B * pI * inv(qI2B)
+    // 等式右边的thrust_vec_correction_quat是参考系下的，左边为机体坐标系下
+    // att_from_quat 是机体坐标到参考坐标的旋转，所以qI2B = att_from_quat.inverse
     thrust_vec_correction_quat = att_from_quat.inverse()*thrust_vec_correction_quat*att_from_quat;
 
     // calculate the remaining rotation required after thrust vector is rotated transformed to the att_from frame
+    // att_from_quat * thrust_vec_correction_quat * heading_quat = att_to_quat
+    // 当前姿态先对齐z轴，再旋转z轴得到期望姿态
     Quaternion yaw_vec_correction_quat = thrust_vec_correction_quat.inverse()*att_from_quat.inverse()*att_to_quat;
 
     // calculate the angle error in x and y.

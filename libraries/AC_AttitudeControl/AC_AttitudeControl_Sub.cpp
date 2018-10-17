@@ -172,9 +172,9 @@ AC_AttitudeControl_Sub::AC_AttitudeControl_Sub(AP_AHRS_View &ahrs, const AP_Vehi
     _pid_rate_roll(AC_ATC_SUB_RATE_RP_P, AC_ATC_SUB_RATE_RP_I, AC_ATC_SUB_RATE_RP_D, AC_ATC_SUB_RATE_RP_IMAX, AC_ATC_SUB_RATE_RP_FILT_HZ, dt),
     _pid_rate_pitch(AC_ATC_SUB_RATE_RP_P, AC_ATC_SUB_RATE_RP_I, AC_ATC_SUB_RATE_RP_D, AC_ATC_SUB_RATE_RP_IMAX, AC_ATC_SUB_RATE_RP_FILT_HZ, dt),
 	_pid_rate_yaw(AC_ATC_SUB_RATE_YAW_P, AC_ATC_SUB_RATE_YAW_I, AC_ATC_SUB_RATE_YAW_D, AC_ATC_SUB_RATE_YAW_IMAX, AC_ATC_SUB_RATE_YAW_FILT_HZ, dt),
-    _adrc_rate_roll(dt, 0.135f, 0.0036),
-    _adrc_rate_pitch(dt, 0.135f, 0.0036),
-    _adrc_rate_yaw(dt, 0.18f, 0.0036)
+    _adrc_rate_roll(dt, 0.135f, 0.0036f, 0.75f, 1.5f, 1.0f),
+    _adrc_rate_pitch(dt, 0.135f, 0.0036f, 0.75f, 1.5f, 1.0f),
+    _adrc_rate_yaw(dt, 0.18f, 0.0036f, 0.75f, 1.5f, 1.0f)
 {
     AP_Param::setup_object_defaults(this, var_info);
 
