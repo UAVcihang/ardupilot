@@ -15,7 +15,7 @@ void Copter::arm_motors_check()
 
     // 改成内八解锁 外八加锁
     // ensure throttle is down
-    if (channel_throttle->get_control_in() > 0 && channel_pitch->get_control_in() < 4000) {
+    if (channel_throttle->get_control_in() > 0 || channel_pitch->get_control_in() < 4000) {
         arming_counter = 0;
         return;
     }
