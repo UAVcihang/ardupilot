@@ -1,0 +1,1072 @@
+ws build
+ws build
+ws build
+ws build
+ws build
+parse_options start
+parse init
+g_module:
+<super: <class 'OptionsContext'>, <OptionsContext object>>
+['aero', 'aerofc-v1', 'bbbmini', 'bebop', 'bhat', 'blue', 'dark', 'disco', 'erleboard', 'erlebrain2', 'linux', 'minlure', 'navio', 'navio2', 'px4-v1', 'px4-v2', 'px4-v3', 'px4-v4', 'px4-v4pro', 'pxf', 'pxfmini', 'raspilot', 'sitl', 'urus', 'zynq']
+user_function_success
+options execute end
+parse_args begin
+None
+{'files': '', 'force': False, 'verbose': 0, 'disable_lttng': False, 'no_lock_in_out': '', 'destdir': '', 'upload': None, 'zones': '', 'prefix': '/usr/local/', 'static': False, 'summary_all': None, 'testcmd': False, 'enable_benchmarks': False, 'out': '', 'progress_bar': 0, 'top': '', 'libdir': None, 'targets': '', 'board': 'sitl', 'all_tests': False, 'check_cxx_compiler': None, 'clear_failed_tests': False, 'bindir': None, 'no_lock_in_top': '', 'profile': '', 'no_lock_in_run': '', 'check_verbose': None, 'jobs': 1, 'submodule_update': True, 'disable_libiio': False, 'python': None, 'distcheck_args': None, 'autoconfig': True, 'clean_all_sigs': None, 'pyo': 1, 'pyc': 1, 'program_group': [], 'no_tests': False, 'colors': 'auto', 'keep': 0, 'pythondir': None, 'disable_tests': False, 'pythonarchdir': None, 'debug': False, 'check_c_compiler': None}
+['copter']
+parse_args end
+parse_args success
+parse_options success
+ctx
+<waflib.Context.Context object at 0x7fd942827810>
+wscript init
+user_function_success
+run_command success
+copter
+ctx
+<ardupilotwaf.context_class object at 0x7fd94281c990>
+ctx
+<waflib.Configure.ConfigurationContext object at 0x7fd94281ca90>
+[0mSetting top to                           :[0m [32m/home/weihli/ardupilot/copter-3.5.5/ardupilot[0m 
+[0mSetting out to                           :[0m [32m/home/weihli/ardupilot/copter-3.5.5/ardupilot/build[0m 
+px4-v2
+[0mAutoconfiguration                        :[0m [32menabled[0m 
+[0mSetting board to                         :[0m [32mpx4-v2[0m 
+[0mChecking for program 'arm-none-eabi-ar'  :[0m [32m/usr/bin/arm-none-eabi-ar[0m 
+[0mUsing toolchain                          :[0m [32marm-none-eabi[0m 
+[0mChecking for 'g++' (C++ compiler)        :[0m [32m/usr/bin/arm-none-eabi-g++[0m 
+[0mChecking for 'gcc' (C compiler)          :[0m [32m/usr/bin/arm-none-eabi-gcc[0m 
+[0mChecking for HAVE_CMATH_ISFINITE         :[0m [33mno[0m 
+[0mChecking for HAVE_CMATH_ISINF            :[0m [33mno[0m 
+[0mChecking for HAVE_CMATH_ISNAN            :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISFINITE_STD_NAMESPACE :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISINF_STD_NAMESPACE    :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISNAN_STD_NAMESPACE    :[0m [33mno[0m 
+[0mChecking for header endian.h                   :[0m [33mnot found[0m 
+[0mChecking for header byteswap.h                 :[0m [33mnot found[0m 
+[0mChecking for program 'cmake'                   :[0m [32m/usr/bin/cmake[0m 
+[0mChecking cmake version                         :[0m [32m3.5.1[0m 
+[0mChecking for program 'ninja, ninja-build'      :[0m [33mnot found[0m 
+[0mChecking for program 'make'                    :[0m [32m/usr/bin/make[0m 
+[0mChecking for program 'python'                  :[0m [32m/usr/bin/python[0m 
+[0mChecking for python version >= 2.7.0           :[0m [32m2.7.12[0m 
+[0mChecking for program 'python'                  :[0m [32m/usr/bin/python[0m 
+[0mChecking for python version >= 2.7.0           :[0m [32m2.7.12[0m 
+[0mSource is git repository                       :[0m [32myes[0m 
+[0mUpdate submodules                              :[0m [32myes[0m 
+[0mChecking for program 'git'                     :[0m [32m/usr/bin/git[0m 
+[0mGtest                                          :[0m [33mPX4 boards currently don't support compiling gtest[0m 
+[0mChecking for program 'arm-none-eabi-size'      :[0m [32m/usr/bin/arm-none-eabi-size[0m 
+[0mBenchmarks                                     :[0m [33mdisabled[0m 
+[0mUnit tests                                     :[0m [33mdisabled[0m 
+user_function_success
+ctx
+<ardupilotwaf.context_class object at 0x7fd941650f50>
+Waf: Entering directory `/home/weihli/ardupilot/copter-3.5.5/ardupilot/build/px4-v2-debug'
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_ADRC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_AttitudeControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Fence
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_INDI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_InputManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PrecLand
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Sprayer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_WPNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/APM_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADSB
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AdvancedFailsafe
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Arming
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Camera
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Gripper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_IOMCU
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_IRLock
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_JSButton
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_L1_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Landing
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_LandingGear
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_LeakDetector
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Menu
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Motors
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Navigation
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Parachute
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Proximity
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RCMapper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Relay
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ServoRelayEvents
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Soaring
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SpdHgtControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Stats
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_TECS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_TemperatureSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_VisualOdom
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/APM_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Arming
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Camera
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_L1_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Menu
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Navigation
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RCMapper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Relay
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ServoRelayEvents
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Stats
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AdvancedFailsafe
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+user_function_success
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+user_function_success
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADSB
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_AttitudeControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_InputManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Fence
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PrecLand
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Sprayer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_WPNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Camera
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_IRLock
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_LandingGear
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Menu
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Motors
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Parachute
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RCMapper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Relay
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ServoRelayEvents
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AdvancedFailsafe
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Proximity
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Stats
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Gripper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Arming
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_VisualOdom
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_ADRC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_INDI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+user_function_success
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/APM_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AdvancedFailsafe
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADSB
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Arming
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Camera
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_L1_Control
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Menu
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Navigation
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Parachute
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RCMapper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Relay
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ServoRelayEvents
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SpdHgtControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_TECS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_WPNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_AttitudeControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Motors
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Fence
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Proximity
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Stats
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Landing
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Soaring
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+user_function_success
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AccelCal
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ADC
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_AHRS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Airspeed
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Baro
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BattMonitor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_BoardConfig
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Buffer
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Common
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Compass
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Declination
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_GPS
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_Empty
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Math
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mission
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF2
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_NavEKF3
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Notify
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_OpticalFlow
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Param
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Rally
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RangeFinder
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Scheduler
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_SerialManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Terrain
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Vehicle
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/DataFlash
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/Filter
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/GCS_MAVLink
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/RC_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/SRV_Channel
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/StorageManager
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Tuning
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RPM
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RSSI
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Mount
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Module
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Button
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ICEngine
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Frsky_Telem
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_FlashStorage
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_UKF
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_MQTT
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_AttitudeControl
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Fence
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_Avoidance
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_PID
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AC_WPNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Camera
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_InertialNav
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_JSButton
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_LeakDetector
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Motors
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_RCMapper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Relay
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_ServoRelayEvents
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Proximity
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Gripper
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Beacon
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_TemperatureSensor
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_Arming
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_UAVCAN
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot
+library_dir:
+/home/weihli/ardupilot/copter-3.5.5/ardupilot/libraries/AP_HAL_PX4
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+user_function_success
+[ 8/15] CMake Configure px4
+-- nuttx-px4fmu-v2-apm
+-- could not find gdb
+-- could not find gdbtui
+-- could not find ddd
+-- Found PythonInterp: /usr/bin/python (found version "2.7.12") 
+-- GIT_DESC = 0384802e81330751f39550a0804357d8b04f278a
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/weihli/ardupilot/copter-3.5.5/ardupilot/build/px4-v2-debug/modules/PX4Firmware
+[14/15] CMake Build px4 msg_gen
+Scanning dependencies of target git_genmsg
+[  0%] Built target git_genmsg
+Scanning dependencies of target git_gencpp
+[ 33%] Built target git_gencpp
+Scanning dependencies of target msg_gen
+[100%] Built target msg_gen
+[15/15] CMake Build px4 prebuild_targets
+Scanning dependencies of target __nuttx_patch_px4fmu-v2
+[  0%] Built target __nuttx_patch_px4fmu-v2
+Scanning dependencies of target __nuttx_copy_px4fmu-v2
+[  0%] Built target __nuttx_copy_px4fmu-v2
+Scanning dependencies of target nuttx_export_px4fmu-v2
+[100%] Built target nuttx_export_px4fmu-v2
+Scanning dependencies of target prebuild_targets
+[100%] Built target prebuild_targets
+[467/865] CMake Configure px4
+-- nuttx-px4fmu-v2-apm
+-- could not find gdb
+-- could not find gdbtui
+-- could not find ddd
+-- Found PythonInterp: /usr/bin/python (found version "2.7.12") 
+-- GIT_DESC = 0384802e81330751f39550a0804357d8b04f278a
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/weihli/ardupilot/copter-3.5.5/ardupilot/build/px4-v2-debug/modules/PX4Firmware
+[858/865] CMake Build px4 fw_io
+[  0%] Built target __nuttx_patch_px4io-v2
+[  4%] Built target __nuttx_copy_px4io-v2
+[  8%] Built target nuttx_export_px4io-v2
+Scanning dependencies of target git_genmsg
+[  8%] Built target git_genmsg
+Scanning dependencies of target git_gencpp
+[ 13%] Built target git_gencpp
+Scanning dependencies of target msg_gen
+[ 21%] Built target msg_gen
+[ 26%] Built target mixer_gen
+[ 26%] Built target io_prebuild_targets
+[100%] Built target px4io-v2
+[100%] Built target fw_io
+[863/865] CMake Build px4 build_firmware_px4fmu-v2
+[  1%] Built target romfs
+[  1%] Built target git_genmsg
+[  2%] Built target git_gencpp
+[  5%] Built target msg_gen
+Scanning dependencies of target git_mavlink
+[  6%] Built target git_mavlink
+Scanning dependencies of target git_uavcan
+[  7%] Built target git_uavcan
+Scanning dependencies of target git_matrix
+[  9%] Built target git_matrix
+Scanning dependencies of target __nuttx_patch_px4fmu-v2
+[  9%] Built target __nuttx_patch_px4fmu-v2
+Scanning dependencies of target __nuttx_copy_px4fmu-v2
+[  9%] Built target __nuttx_copy_px4fmu-v2
+Scanning dependencies of target nuttx_export_px4fmu-v2
+[ 10%] Built target nuttx_export_px4fmu-v2
+Scanning dependencies of target prebuild_targets
+[ 10%] Built target prebuild_targets
+[ 11%] Built target platforms__common
+[ 14%] Built target platforms__nuttx
+[ 15%] Built target platforms__nuttx__px4_layer
+Scanning dependencies of target xml_gen
+[ 18%] Built target xml_gen
+[ 19%] Built target modules__param
+[ 26%] Built target drivers__device
+[ 30%] Built target drivers__stm32
+[ 31%] Built target drivers__stm32__adc
+[ 34%] Built target drivers__stm32__tone_alarm
+[ 35%] Built target drivers__led
+[ 38%] Built target drivers__px4fmu
+[ 39%] Built target systemcmds__bl_update
+[ 40%] Built target systemcmds__mixer
+[ 42%] Built target systemcmds__perf
+[ 43%] Built target systemcmds__reboot
+[ 46%] Built target systemcmds__top
+[ 48%] Built target systemcmds__nshterm
+[ 51%] Built target systemcmds__mtd
+[ 52%] Built target systemcmds__ver
+[ 53%] Built target systemcmds__usb_connected
+[ 55%] Built target systemcmds__otp
+[ 71%] Built target modules__systemlib
+[ 72%] Built target mixer_gen
+[ 77%] Built target modules__systemlib__mixer
+[ 85%] Built target modules__uORB
+[ 92%] Built target drivers__boards__px4fmu-v2
+[ 93%] Built target drivers__pwm_input
+[ 98%] Built target drivers__px4io
+[100%] Linking CXX executable firmware_nuttx
+src/firmware/nuttx/CMakeFiles/firmware_nuttx.dir/build.make:122: recipe for target 'src/firmware/nuttx/firmware_nuttx' failed
+CMakeFiles/Makefile2:2366: recipe for target 'src/firmware/nuttx/CMakeFiles/firmware_nuttx.dir/all' failed
+CMakeFiles/Makefile2:2415: recipe for target 'src/firmware/nuttx/CMakeFiles/build_firmware_px4fmu-v2.dir/rule' failed
+Makefile:912: recipe for target 'build_firmware_px4fmu-v2' failed
+Waf: Leaving directory `/home/weihli/ardupilot/copter-3.5.5/ardupilot/build/px4-v2-debug'
