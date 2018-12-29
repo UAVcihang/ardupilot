@@ -1,0 +1,32 @@
+[0mSetting top to                           :[0m [32m/home/weihli/ardupilot/copter-3.5.5/ardupilot[0m 
+[0mSetting out to                           :[0m [32m/home/weihli/ardupilot/copter-3.5.5/ardupilot/build[0m 
+[0mAutoconfiguration                        :[0m [32menabled[0m 
+[0mSetting board to                         :[0m [32mpx4-v2[0m 
+[0mChecking for program 'arm-none-eabi-ar'  :[0m [32m/usr/bin/arm-none-eabi-ar[0m 
+[0mUsing toolchain                          :[0m [32marm-none-eabi[0m 
+[0mChecking for 'g++' (C++ compiler)        :[0m [32m/usr/bin/arm-none-eabi-g++[0m 
+[0mChecking for 'gcc' (C compiler)          :[0m [32m/usr/bin/arm-none-eabi-gcc[0m 
+[0mChecking for HAVE_CMATH_ISFINITE         :[0m [33mno[0m 
+[0mChecking for HAVE_CMATH_ISINF            :[0m [33mno[0m 
+[0mChecking for HAVE_CMATH_ISNAN            :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISFINITE_STD_NAMESPACE :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISINF_STD_NAMESPACE    :[0m [33mno[0m 
+[0mChecking for NEED_CMATH_ISNAN_STD_NAMESPACE    :[0m [33mno[0m 
+[0mChecking for header endian.h                   :[0m [33mnot found[0m 
+[0mChecking for header byteswap.h                 :[0m [33mnot found[0m 
+[0mChecking for program 'cmake'                   :[0m [32m/usr/bin/cmake[0m 
+[0mChecking cmake version                         :[0m [32m3.5.1[0m 
+[0mChecking for program 'ninja, ninja-build'      :[0m [33mnot found[0m 
+[0mChecking for program 'make'                    :[0m [32m/usr/bin/make[0m 
+[0mChecking for program 'python'                  :[0m [32m/usr/bin/python[0m 
+[0mChecking for python version >= 2.7.0           :[0m [32m2.7.12[0m 
+[0mChecking for program 'python'                  :[0m [32m/usr/bin/python[0m 
+[0mChecking for python version >= 2.7.0           :[0m [32m2.7.12[0m 
+[0mSource is git repository                       :[0m [32myes[0m 
+[0mUpdate submodules                              :[0m [32myes[0m 
+[0mChecking for program 'git'                     :[0m [32m/usr/bin/git[0m 
+[0mGtest                                          :[0m [33mPX4 boards currently don't support compiling gtest[0m 
+[0mChecking for program 'arm-none-eabi-size'      :[0m [32m/usr/bin/arm-none-eabi-size[0m 
+[0mBenchmarks                                     :[0m [33mdisabled[0m 
+[0mUnit tests                                     :[0m [33mdisabled[0m 
+'configure' finished successfully (5.738s)
