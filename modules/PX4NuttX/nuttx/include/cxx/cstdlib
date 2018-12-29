@@ -75,6 +75,8 @@ namespace std
   using ::strtol;
   using ::strtoul;
   using ::strtod;
+  using ::strtof;
+  using ::strtold;
 #ifdef CONFIG_HAVE_LONG_LONG
   using ::strtoll;
   using ::strtoull;

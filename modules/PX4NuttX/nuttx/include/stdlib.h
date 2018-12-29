@@ -154,6 +154,8 @@ long long strtoll(const char *, char **, int);
 unsigned long long strtoull(const char *, char **, int);
 #endif
 double_t  strtod(const char *, char **);
+float     strtof(FAR const char *str, FAR char **endptr);
+long double strtold(FAR const char *str, FAR char **endptr);
 
 #define atoi(nptr)  strtol((nptr), NULL, 10)
 #define atol(nptr)  strtol((nptr), NULL, 10)

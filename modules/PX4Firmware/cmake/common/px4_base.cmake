@@ -432,7 +432,7 @@ function(px4_add_upload)
 	px4_join(OUT serial_ports LIST "${serial_ports}" GLUE ",")
 	add_custom_target(${OUT}
 		COMMAND ${PYTHON_EXECUTABLE}
-			${CMAKE_SOURCE_DIR}/Tools/px_uploader.py --port ${serial_ports} ${BUNDLE}
+			$ENV{UPLOADER} ${BUNDLE}
 		DEPENDS ${BUNDLE}
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		COMMENT "uploading ${BUNDLE}"
