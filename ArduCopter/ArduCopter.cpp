@@ -107,7 +107,7 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(send_mqtt,              1,     500),
 
     // UKF更新任务
-	SCHED_TASK(update_ukf,           200,     200),
+	//SCHED_TASK(update_ukf,           200,     200),
     SCHED_TASK(update_flowermeter, 10,     100),
 #if PRECISION_LANDING == ENABLED
     SCHED_TASK(update_precland,      400,     50),
@@ -220,10 +220,10 @@ void Copter::perf_update(void)
 }
 
 // UKF 更新-- 400hz
-void Copter::update_ukf(void)
+/*void Copter::update_ukf(void)
 {
 	//ukf.update();
-}
+}*/
 
 /*
   update AP_Stats
@@ -491,7 +491,7 @@ void Copter::three_hz_loop()
 // 发送MQTT数据
 void Copter::send_mqtt()
 {
-	mqtt.update();
+	//mqtt.update();
 }
 
 // one_hz_loop - runs at 1Hz
@@ -673,7 +673,7 @@ void Copter::update_altitude()
 // 读取流量计数据
 void Copter::update_flowermeter()
 {
-	static uint64_t last_of_update = 0;
+/*	static uint64_t last_of_update = 0;
 	static uint32_t true_cnt=0;
 	static uint32_t false_cnt = 0;
 	//Vector3f vel = inertial_nav.get_velocity();
@@ -695,10 +695,7 @@ void Copter::update_flowermeter()
     	}
     	true_cnt++;
     	false_cnt = 0;
-    	//float speed = norm(vel.x, vel.y);
-    	/*if(flowermeter.get_flowerVel() < 3 && pwm > 1200){
-    		GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, "Drug Empty");
-    	}*/
+
     }
     else{
     	if((pwm > 1200) && flowermeter.get_valid()){
@@ -713,11 +710,8 @@ void Copter::update_flowermeter()
     			failsafe_drug_event();
     		}
     	}
-    	/*else
-    	{
-    		false_cnt = 0;
-    	}*/
-    }
+
+    }*/
 }
 
 AP_HAL_MAIN_CALLBACKS(&copter);

@@ -147,6 +147,10 @@ void AC_Loiter::soften_for_landing()
 
     // set target position to current position
     _pos_control.set_xy_target(curr_pos.x, curr_pos.y);
+	
+	    // also prevent I term build up in xy velocity controller. Note
+    // that this flag is reset on each loop, in run_xy_controller()
+    _pos_control.set_limit_accel_xy();
 }
 
 /// set pilot desired acceleration in centi-degrees
@@ -272,6 +276,9 @@ void AC_Loiter::calc_desired_velocity(float nav_dt, float ekfGndSpdLimit)
                 float brake_gain = _pos_control.get_vel_xy_pid().kP() * 0.5f;
                 loiter_brake_accel = constrain_float(AC_AttitudeControl::sqrt_controller(desired_speed, brake_gain, _brake_jerk_max_cmsss, nav_dt), 0.0f, _brake_accel_cmss);
             }
+			if(desired_speed > 100.0f) {
+				_ahrs.setBrakeExpected(true);
+			}
         } else {
             loiter_brake_accel = 0.0f;
             _brake_timer = AP_HAL::millis();

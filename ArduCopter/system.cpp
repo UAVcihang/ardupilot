@@ -121,7 +121,7 @@ void Copter::init_ardupilot()
     serial_manager.init();
 
     // mqtt 初始化  必须在serial_manager初始化好后
-    mqtt.init(serial_manager);
+    //mqtt.init(serial_manager);
     // setup first port early to allow BoardConfig to report errors
     gcs_chan[0].setup_uart(serial_manager, AP_SerialManager::SerialProtocol_MAVLink, 0);
 
@@ -309,7 +309,7 @@ void Copter::init_ardupilot()
     mission.init();
 
     // 流量计
-    flowermeter.init();
+    //flowermeter.init();
 
     // initialise DataFlash library
     DataFlash.set_mission(&mission);
@@ -350,7 +350,7 @@ void Copter::init_ardupilot()
 
 	// UKF初始化
 	//ukf.altUkfInit();
-    ukf.init();
+    // ukf.init();
 
     // 只支持4 6 8轴
     switch(g2.frame_class.get()){

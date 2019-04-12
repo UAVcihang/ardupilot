@@ -15,6 +15,8 @@
 // Ìí¼Ó adrc
 #include <AC_ADRC/AC_ADRC.h>
 
+//#include <ADAP_Control/ADAP_Control.h>
+
 #define AC_ATTITUDE_CONTROL_ANGLE_P                     4.5f             // default angle P gain for roll, pitch and yaw
 
 #define AC_ATTITUDE_ACCEL_RP_CONTROLLER_MIN_RADSS       radians(40.0f)   // minimum body-frame acceleration limit for the stability controller (for roll and pitch axis)

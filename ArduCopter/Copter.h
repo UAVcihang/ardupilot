@@ -133,16 +133,16 @@
 #endif
 
 // MQTT 对接哈工大惠达能机平台
-#include <AC_MQTT/AC_MQTT.h>
+//#include <AC_MQTT/AC_MQTT.h>
 
 // 测试adrc
 #include <AC_ADRC/AC_ADRC.h>
 
 // 测试 ukf
-#include <AC_UKF/AC_UKF.h>
+//#include <AC_UKF/AC_UKF.h>
 
 // 流量计 接AUX5口 检测pwm个数
-#include <AC_Flowermeter/AC_Flowermeter.h>
+//#include <AC_Flowermeter/AC_Flowermeter.h>
 
 
 class Copter : public AP_HAL::HAL::Callbacks {
@@ -223,16 +223,16 @@ private:
     NavEKF3 EKF3{&ahrs, barometer, rangefinder};
     AP_AHRS_NavEKF ahrs{ins, barometer, gps, rangefinder, EKF2, EKF3, AP_AHRS_NavEKF::FLAG_ALWAYS_USE_EKF};
     // UKF 实例
-    AC_UKF ukf{&ahrs, barometer, MAIN_LOOP_SECONDS*2.0f};
+    //AC_UKF ukf{&ahrs, barometer, MAIN_LOOP_SECONDS*2.0f};
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_SITL
     SITL::SITL sitl;
 #endif
 
     // MQTT
-    AC_MQTT mqtt{&ahrs};
+    //AC_MQTT mqtt{&ahrs};
     // 流量计
-    AC_Flowermeter flowermeter;
+    //AC_Flowermeter flowermeter;
     // Mission library
     AP_Mission mission;
 
@@ -435,6 +435,7 @@ private:
     // 5通道校磁
     int8_t rc5_status;
     uint32_t rc5_last_trigger_ms;
+	int8_t rc5_last_pos;
 
     // 解锁时电机转动序号
     uint8_t motor_spin_seq;
@@ -707,7 +708,7 @@ private:
     static const struct LogStructure log_structure[];
 
 	// 更新UKF
-	void update_ukf();
+	//void update_ukf();
 
     // 获取最大下降速度
     uint16_t get_pilot_speed_dn();

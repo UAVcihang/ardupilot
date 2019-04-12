@@ -178,6 +178,10 @@ const AP_Param::GroupInfo AC_AttitudeControl_Multi::var_info[] = {
     AP_SUBGROUPINFO(_adrc_rate_yaw, "ADRC_Y_", 9, AC_AttitudeControl_Multi, AC_ADRC),
 
     AP_SUBGROUPINFO(_indi_rate, "INDI_", 10, AC_AttitudeControl_Multi, AC_INDI),
+	
+	//AP_SUBGROUPINFO(adap_control_roll, "A_R_", 11, AC_AttitudeControl_Multi, ADAP_Control),
+	//AP_SUBGROUPINFO(adap_control_pitch, "A_P_", 12, AC_AttitudeControl_Multi, ADAP_Control),
+	//AP_SUBGROUPINFO(adap_control_yaw, "A_Y_", 13, AC_AttitudeControl_Multi, ADAP_Control),
 
     AP_GROUPEND
 };
@@ -275,6 +279,7 @@ void AC_AttitudeControl_Multi::rate_controller_run()
     // move throttle vs attitude mixing towards desired (called from here because this is conveniently called on every iteration)
     update_throttle_rpy_mix();
 
+	
     if(_indi_rate.get_enable() >0){
         Vector3f output;
         _indi_rate.stabilization_indi_run(_ahrs.get_gyro_raw_latest(), _attitude_error, output);
@@ -294,6 +299,7 @@ void AC_AttitudeControl_Multi::rate_controller_run()
     //
     }
     else {
+
         _motors.set_roll(rate_target_to_motor_roll(gyro_latest.x, _rate_target_ang_vel.x));
         _motors.set_pitch(rate_target_to_motor_pitch(gyro_latest.y, _rate_target_ang_vel.y));
         _motors.set_yaw(rate_target_to_motor_yaw(gyro_latest.z, _rate_target_ang_vel.z));

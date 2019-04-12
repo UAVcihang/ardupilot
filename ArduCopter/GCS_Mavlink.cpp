@@ -212,14 +212,14 @@ void NOINLINE Copter::send_current_waypoint(mavlink_channel_t chan)
 void NOINLINE Copter::send_rangefinder(mavlink_channel_t chan)
 {
     // exit immediately if rangefinder is disabled
-    /*if (!rangefinder.has_data_orient(ROTATION_PITCH_270)) {
+    if (!rangefinder.has_data_orient(ROTATION_PITCH_270)) {
         return;
-    }*/
+    }
 	//Vector3f att = ukf.get_attidute();
     mavlink_msg_rangefinder_send(
             chan,
-            /*rangefinder.distance_cm_orient(ROTATION_PITCH_270) * 0.01f*/flowermeter.get_period() * 1.0f,
-            /*rangefinder.voltage_mv_orient(ROTATION_PITCH_270) * 0.001f*/flowermeter.get_flowerVel() * 1.0f);
+            rangefinder.distance_cm_orient(ROTATION_PITCH_270) * 0.01f/*flowermeter.get_period() * 1.0f*/,
+            rangefinder.voltage_mv_orient(ROTATION_PITCH_270) * 0.001f/*flowermeter.get_flowerVel() * 1.0f*/);
 }
 #endif
 
@@ -1440,6 +1440,7 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
             // param2 : throttle type (0=throttle percentage, 1=PWM, 2=pilot throttle channel pass-through. See MOTOR_TEST_THROTTLE_TYPE enum)
             // param3 : throttle (range depends upon param2)
             // param4 : timeout (in seconds)
+				//copter.gcs_send_text(MAV_SEVERITY_WARNING, "Motor test");
             result = copter.mavlink_motor_test_start(chan, (uint8_t)packet.param1, (uint8_t)packet.param2, (uint16_t)packet.param3, packet.param4);
             break;
 

@@ -135,6 +135,12 @@ protected:
     AC_ADRC            _adrc_rate_roll;
 	AC_ADRC            _adrc_rate_pitch;
 	AC_ADRC            _adrc_rate_yaw;
+	
+
 
 	AC_INDI            _indi_rate;
+	
+	//ADAP_Control adap_control_roll{"RL"};
+	//ADAP_Control adap_control_pitch{"PT"};
+	//ADAP_Control adap_control_yaw{"YW"};
 };

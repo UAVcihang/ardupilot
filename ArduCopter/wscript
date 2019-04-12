@@ -34,6 +34,11 @@ def build(bld):
             'AP_Beacon',
             'AP_Arming',
             'AP_VisualOdom',
+			'AC_ADRC',
+			'AC_INDI',
+#			'ADAP_Control',
+#			'AC_Flowermeter',
+			'AC_UKF'
         ],
     )
 

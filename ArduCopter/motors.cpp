@@ -13,18 +13,19 @@ void Copter::arm_motors_check()
 {
     static int16_t arming_counter;
 
-    // ¸Ä³ÉÄÚ°Ë½âËø Íâ°Ë¼ÓËø
+    // æ”¹æˆå†…å…«è§£é” å¤–å…«åŠ é”
     // ensure throttle is down
-    if (channel_throttle->get_control_in() > 0 && channel_pitch->get_control_in() < 4000) {
+    if (channel_throttle->get_control_in() > 0 || channel_pitch->get_control_in() < 4000) {
         arming_counter = 0;
+		arm_gesture_release = true;
         return;
     }
 
     int16_t tmp = channel_yaw->get_control_in();
-    int16_t tmp_roll = channel_roll->get_control_in();
+	int16_t tmp_roll = channel_roll->get_control_in();
 
     // full right
-    // ÄÚ°Ë
+	// å†…å…«
     if (tmp > 4000 && tmp_roll < -4000) {
 
         // increase the arming counter to a maximum of 1 beyond the auto trim counter
@@ -38,8 +39,8 @@ void Copter::arm_motors_check()
             if (!init_arm_motors(false)) {
                 arming_counter = 0;
             }
-
-            // ½âËøÊÖÊÆÎ´ËÉ¿ª
+			
+			// è§£é”æ‰‹åŠ¿æœªæ¾å¼€
             arm_gesture_release = false;
         }
 
@@ -47,12 +48,11 @@ void Copter::arm_motors_check()
         if (arming_counter == AUTO_TRIM_DELAY && motors->armed() && control_mode == STABILIZE) {
             auto_trim_counter = 250;
             // ensure auto-disarm doesn't trigger immediately
-            // ×Ô¶¯¼ÓËø¿ªÊ¼¼ÆËãµÄÊ±¼ä
             auto_disarm_begin = millis();
         }
 
     // full left
-    // Íâ°Ë
+	// å¤–å…«
     }else if (tmp < -4000 && tmp_roll > 4000) {
         if (!mode_has_manual_throttle(control_mode) && !ap.land_complete) {
             arming_counter = 0;
@@ -72,22 +72,22 @@ void Copter::arm_motors_check()
     // Yaw is centered so reset arming counter
     }else{
         arming_counter = 0;
-        arm_gesture_release = true;
+		arm_gesture_release = true;
     }
 }
 
 // auto_disarm_check - disarms the copter if it has been sitting on the ground in manual mode with throttle low for at least 15 seconds
-// called at 10hz
 void Copter::auto_disarm_check()
 {
     uint32_t tnow_ms = millis();
     uint32_t disarm_delay_ms = 1000*constrain_int16(g.disarm_delay, 0, 127);
 
-    // Èç¹û·É»úÒÑ¾­½âËø£¬µ«½âËøÊÖÊÆÎ´ËÉ¿ª£¬ÔòÍË³ö
+    // å¦‚æœé£æœºå·²ç»è§£é”ï¼Œä½†è§£é”æ‰‹åŠ¿æœªæ¾å¼€ï¼Œåˆ™é€€å‡º
     if(motors->armed() && (!arm_gesture_release || !ap.motor_spin_all)){
     	auto_disarm_begin = tnow_ms;
     	return;
     }
+	
     // exit immediately if we are already disarmed, or if auto
     // disarming is disabled
     if (!motors->armed() || disarm_delay_ms == 0 || control_mode == THROW) {
@@ -130,7 +130,6 @@ void Copter::auto_disarm_check()
     if ((tnow_ms-auto_disarm_begin) >= disarm_delay_ms) {
         init_disarm_motors();
         auto_disarm_begin = tnow_ms;
-
     }
 }
 
@@ -144,7 +143,7 @@ bool Copter::init_arm_motors(bool arming_from_gcs)
     if(compass.is_calibrating()) {
     	return false;
     }
-
+	
     // exit immediately if already in this function
     if (in_arm_motors) {
         return false;
@@ -287,13 +286,10 @@ void Copter::init_disarm_motors()
     hal.util->set_soft_armed(false);
 
     ap.in_arming_delay = false;
-
-    //
-    ap.motor_spin_all = false;
+	ap.motor_spin_all = false;
 }
 
 // motors_output - send output to motors library which will adjust and send to ESCs and servos
-// fast loop called at 400hz
 void Copter::motors_output()
 {
 #if ADVANCED_FAILSAFE == ENABLED
@@ -307,7 +303,8 @@ void Copter::motors_output()
 #endif
 
     // Update arming delay state
-    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > (ARMING_DELAY_SEC+1)*1.0e3f || control_mode == THROW)) {
+	// æ‰€æœ‰ç”µæœºè½¬å»èµ·æ¥åæ”¹å˜çŠ¶æ€
+    if (ap.in_arming_delay && (!motors->armed() || millis()-arm_time_ms > ARMING_DELAY_SEC*1.0e3f || control_mode == THROW) && ap.motor_spin_all) {
         ap.in_arming_delay = false;
     }
 
@@ -323,15 +320,11 @@ void Copter::motors_output()
     // check if we are performing the motor test
     if (ap.motor_test) {
         motor_test_output();
-    }
-    /*else if(!ap.motor_spin_all){
-    	motor_armed_spin_order();
-    }*/
-    else {
-        bool interlock = motors->armed() /*&& !ap.in_arming_delay*/ && (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
+    } else {
+        bool interlock = motors->armed() /*&& !ap.in_arming_delay */&& (!ap.using_interlock || ap.motor_interlock_switch) && !ap.motor_emergency_stop;
         if (!motors->get_interlock() && interlock) {
             motors->set_interlock(true);
-            motors->set_motor_enabled(0);
+			motors->set_motor_enabled(0);
             Log_Write_Event(DATA_MOTORS_INTERLOCK_ENABLED);
         } else if (motors->get_interlock() && !interlock) {
             motors->set_interlock(false);
@@ -341,10 +334,8 @@ void Copter::motors_output()
         if(interlock && ap.in_arming_delay){
         	motor_armed_spin_order();
         }
-        //else{
         // send output signals to motors
         motors->output();
-        //}
     }
 
     // push all channels

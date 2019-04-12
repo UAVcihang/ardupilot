@@ -708,7 +708,7 @@ void AC_AttitudeControl::nonlinear_control_quat(Quaternion& att_to_quat, const Q
     Quaternion qd_red(att_from_thrust_vec, att_to_thrust_vec);
     //qd_red.from_axis_angle(thrust_vec_cross, thrust_vec_dot);
 
-    if(abs(qd_red.q2) > (1.f - 1e-5f) || abs(qd_red.q3) > (1.f - 1e-5f)){
+    if(fabsf(qd_red.q2) > (1.f - 1e-5f) || fabsf(qd_red.q3) > (1.f - 1e-5f)){
     	qd_red = att_to_quat;
     }
     else
