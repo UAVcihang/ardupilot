@@ -53,8 +53,10 @@
 # define MAIN_LOOP_SECONDS 0.0025f
 # define MAIN_LOOP_MICROS  2500
 
+// modified by weihli 
+// 原来值为2 
 #ifndef ARMING_DELAY_SEC
-    # define ARMING_DELAY_SEC 2.0f
+    # define ARMING_DELAY_SEC 3.0f
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -218,10 +220,10 @@
 //////////////////////////////////////////////////////////////////////////////
 //  OPTICAL_FLOW & VISUAL ODOMETRY
 #ifndef OPTFLOW
- # define OPTFLOW       DISABLED///ENABLED
+ # define OPTFLOW       DISABLED//ENABLED
 #endif
 #ifndef VISUAL_ODOMETRY_ENABLED
-# define VISUAL_ODOMETRY_ENABLED DISABLED///ENABLED
+# define VISUAL_ODOMETRY_ENABLED DISABLED//ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -239,25 +241,25 @@
 //////////////////////////////////////////////////////////////////////////////
 // Precision Landing with companion computer or IRLock sensor
 #ifndef PRECISION_LANDING
- # define PRECISION_LANDING DISABLED ///ENABLED
+ # define PRECISION_LANDING DISABLED//ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 //	gripper
 #ifndef GRIPPER_ENABLED
- # define GRIPPER_ENABLED DISABLED ///ENABLED
+ # define GRIPPER_ENABLED DISABLED//ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Parachute release
 #ifndef PARACHUTE
- # define PARACHUTE DISABLED ///ENABLED
+ # define PARACHUTE ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // ADSB support
 #ifndef ADSB_ENABLED
-# define ADSB_ENABLED DISABLED ///ENABLED
+# define ADSB_ENABLED DISABLED//ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -360,7 +362,7 @@
 // MOUNT (ANTENNA OR CAMERA)
 //
 #ifndef MOUNT
- # define MOUNT         DISABLED//ENABLED
+ # define MOUNT         ENABLED
 #endif
 
 
@@ -436,7 +438,7 @@
 
 // AUTO Mode
 #ifndef WP_YAW_BEHAVIOR_DEFAULT
- # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL
+ # define WP_YAW_BEHAVIOR_DEFAULT   WP_YAW_BEHAVIOR_NONE//WP_YAW_BEHAVIOR_LOOK_AT_NEXT_WP_EXCEPT_RTL
 #endif
 
 #ifndef AUTO_YAW_SLEW_RATE
@@ -563,7 +565,7 @@
 #endif
 
 #ifndef AUTO_DISARMING_DELAY
-# define AUTO_DISARMING_DELAY  10
+# define AUTO_DISARMING_DELAY  3
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -645,7 +647,7 @@
 
 //use this to completely disable FRSKY TELEM
 #ifndef FRSKY_TELEM_ENABLED
-  #  define FRSKY_TELEM_ENABLED          DISABLED///ENABLED
+  #  define FRSKY_TELEM_ENABLED          DISABLED//ENABLED
 #endif
 
 #ifndef ADVANCED_FAILSAFE
