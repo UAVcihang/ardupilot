@@ -1108,16 +1108,16 @@ void AC_WPNav::update_spline_solution(const Vector3f& origin, const Vector3f& de
 /// advance_spline_target_along_track - move target location along track from origin to destination
 bool AC_WPNav::advance_spline_target_along_track(float dt)
 {
-	static int cnt=0;
+	//static int cnt=0;
     if (!_flags.reached_destination) {
         Vector3f target_pos, target_vel;
 
         // update target position and velocity from spline calculator
         calc_spline_pos_vel(_spline_time, target_pos, target_vel);
-		if(cnt%40 == 0){
+		/*if(cnt%40 == 0){
 		hal.console->printf("spline_vel:%f  spline time:%f", _spline_vel_scaler, _spline_time_scale);
 		}
-		cnt++;
+		cnt++;*/
         // if target velocity is zero the origin and destination must be the same
         // so flag reached destination (and protect against divide by zero)
         float target_vel_length = target_vel.length();

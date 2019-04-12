@@ -303,7 +303,7 @@ void Copter::zigzag_auto_control()
     		break;
     	case RC_RIGHT:
     		// 浮点型 判断0 经常进入不了
-    		if(/*is_zero(target_roll)*/ (fabs(target_roll) < aparm.angle_max / 15.0f)) {
+    		if(/*is_zero(target_roll)*/ (fabsf(target_roll) < aparm.angle_max / 15.0f)) {
     			//mission.set_ab_direction(AP_Mission::AB_RIGHT);
     			zigzag_waypoint_state.direct = -1;
     			//zigzag_waypoint_state.action = true;
@@ -312,7 +312,7 @@ void Copter::zigzag_auto_control()
 
     		break;
     	case RC_LEFT:
-    		if(/*is_zero(target_roll)*/(fabs(target_roll) < aparm.angle_max / 15.0f)) {
+    		if(/*is_zero(target_roll)*/(fabsf(target_roll) < aparm.angle_max / 15.0f)) {
     			//mission.set_ab_direction(AP_Mission::AB_LEFT);
     			zigzag_waypoint_state.direct = 1;
     			//zigzag_waypoint_state.action = true;
@@ -327,7 +327,7 @@ void Copter::zigzag_auto_control()
     		return;
     	}
     }
-    else if(fabs(target_roll) > aparm.angle_max / 15.0f || fabs(target_pitch) > aparm.angle_max / 15.0f/*!is_zero(target_roll) || !is_zero(target_pitch)*/ /*|| !is_zero(target_yaw_rate)*/){
+    else if(fabsf(target_roll) > aparm.angle_max / 15.0f || fabsf(target_pitch) > aparm.angle_max / 15.0f/*!is_zero(target_roll) || !is_zero(target_pitch)*/ /*|| !is_zero(target_yaw_rate)*/){
     	zigzag_mode = Zigzag_Manual;
     	zigzag_auto_complete_state = false;
 #if 1
