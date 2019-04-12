@@ -10,6 +10,11 @@ bool Copter::start_command(const AP_Mission::Mission_Command& cmd)
 
     switch(cmd.id) {
 
+		case 15:
+			sprayer.run(false);
+			do_nav_wp(cmd);
+			
+			break;
     ///
     /// navigation commands
     ///
@@ -18,7 +23,8 @@ bool Copter::start_command(const AP_Mission::Mission_Command& cmd)
         break;
 
     case MAV_CMD_NAV_WAYPOINT:                  // 16  Navigate to Waypoint
-        do_nav_wp(cmd);
+        	sprayer.run(true);
+			do_nav_wp(cmd);
         break;
 
     case MAV_CMD_NAV_LAND:              // 21 LAND to Waypoint
@@ -205,6 +211,10 @@ bool Copter::verify_command(const AP_Mission::Mission_Command& cmd)
     //
     // navigation commands
     //
+		case 15:
+			return verify_nav_wp(cmd);
+			break;
+			
     case MAV_CMD_NAV_TAKEOFF:
         return verify_takeoff();
 
@@ -347,6 +357,7 @@ void Copter::do_nav_wp(const AP_Mission::Mission_Command& cmd)
     // Set wp navigation target
     auto_wp_start(target_loc);
 
+	
     // if no delay set the waypoint as "fast"
     if (loiter_time_max == 0 ) {
         wp_nav->set_fast_waypoint(true);
@@ -591,7 +602,7 @@ void Copter::do_nav_delay(const AP_Mission::Mission_Command& cmd)
         nav_delay_time_max = cmd.content.nav_delay.seconds * 1000; // convert seconds to milliseconds
     } else {
         // absolute delay to utc time
-        nav_delay_time_max = hal.util->get_time_utc(cmd.content.nav_delay.hour_utc, cmd.content.nav_delay.min_utc, cmd.content.nav_delay.sec_utc, 0);
+        nav_delay_time_max = AP::rtc().get_time_utc(cmd.content.nav_delay.hour_utc, cmd.content.nav_delay.min_utc, cmd.content.nav_delay.sec_utc, 0);//hal.util->get_time_utc(cmd.content.nav_delay.hour_utc, cmd.content.nav_delay.min_utc, cmd.content.nav_delay.sec_utc, 0);
     }
     gcs_send_text_fmt(MAV_SEVERITY_INFO, "Delaying %u sec",(unsigned int)(nav_delay_time_max/1000));
 }
@@ -1051,7 +1062,7 @@ bool Copter::verify_yaw()
     }
 
     // check if we are within 2 degrees of the target heading
-    if (labs(wrap_180_cd(ahrs.yaw_sensor-yaw_look_at_heading)) <= 100) {
+    if (labs(wrap_180_cd(ahrs.yaw_sensor-yaw_look_at_heading)) <= 80) {
         return true;
     }else{
         return false;

@@ -57,6 +57,22 @@ public:
     /// provide rangefinder altitude
     void set_rangefinder_alt(bool use, bool healthy, float alt_cm) { _rangefinder_available = use; _rangefinder_healthy = healthy; _rangefinder_alt_cm = alt_cm; }
 
+
+	/// provide pilot input altitude from climb rate
+	void set_pilotinput_alt_from_climb_rate(float climb_rate, float dt){
+		_pilotinput_alt_cm += climb_rate * dt;
+	}
+	
+	void reset_pilotinput_alt()
+	{
+		_pilotinput_alt_cm = 0;
+	}
+	
+	float get_pilotinput_alt()
+	{
+		return _pilotinput_alt_cm;
+	}
+	
     ///
     /// brake controller
     ///
@@ -124,6 +140,10 @@ public:
     ///     used to reset the position just before takeoff
     ///     relies on set_wp_destination or set_wp_origin_and_destination having been called first
     void shift_wp_origin_to_current_pos();
+	
+	/* add by weihli 
+	   Test throttle control alt in auto mode */
+	void shift_wp_destination_from_climb_rate(float climb_rate_cms, float dt, bool force_descend);
 
     /// get_wp_stopping_point_xy - calculates stopping point based on current position, velocity, waypoint acceleration
     ///		results placed in stopping_position vector
@@ -154,7 +174,7 @@ public:
 
     bool advance_u_turn(float dt){
 
-    	Vector3f target_vel = _pos_control.get_vel_target();
+		Vector3f target_vel = _pos_control.get_vel_target();
         // ramp angular velocity to maximum
         if (_angular_vel < _angular_vel_max) {
             _angular_vel += fabsf(_angular_accel) * dt;
@@ -190,14 +210,13 @@ public:
         // update position controller target
         _pos_control.set_xy_target(target.x, target.y);
 
-        // 机头方向朝与速度方向一致
         if (!is_zero(target_vel.x) && !is_zero(target_vel.y)) {
              set_yaw_cd(RadiansToCentiDegrees(atan2f(target_vel.y,target_vel.x)));
         }else{
 		Vector3f curr_pos = _inav.get_position();
 		set_yaw_cd(RadiansToCentiDegrees(atan2f(target.y - curr_pos.y,target.x - curr_pos.x)));
 		}
-
+		
         if(_angle >= M_PI) {
         	_flags.reached_destination = true;
         	_mode = false;
@@ -225,7 +244,7 @@ public:
     	//Vector3f cur_vel = _inav.get_velocity();
     	//float vel = norm(cur_vel.x, cur_vel.y);
     	//_angular_vel = vel / radius;
-        _angular_vel = _angular_vel_max * 0.25f;
+        _angular_vel = 0.0f;//_angular_vel_max * 0.25f;
         _angle_offset = (offset)?M_PI:0.0f;
         _angle_offset = _angle_offset + direc - M_PI * 0.5f;
 
@@ -233,7 +252,8 @@ public:
     	_flags.fast_waypoint = true;
     	_mode = true;
     }
-    void set_zigzag_mode(bool mode){
+	
+	void set_zigzag_mode(bool mode){
     	_mode = mode;
     }
 
@@ -405,6 +425,10 @@ protected:
     AP_Int8     _rangefinder_use;
     bool        _rangefinder_healthy = false;
     float       _rangefinder_alt_cm = 0.0f;
+	
+	// add by weihli 
+	// for throttle control alt
+	float       _pilotinput_alt_cm = 0.0f;
 
     bool       _mode; // u or line
     bool       _cw_flag;

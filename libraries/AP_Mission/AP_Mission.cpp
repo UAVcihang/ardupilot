@@ -21,6 +21,8 @@ const AP_Param::GroupInfo AP_Mission::var_info[] = {
     // @Values: 0:Resume Mission, 1:Restart Mission
     // @User: Advanced
     AP_GROUPINFO("RESTART",  1, AP_Mission, _restart, AP_MISSION_RESTART_DEFAULT),
+	
+	AP_GROUPINFO("BP_IDX",  2, AP_Mission, _bp_index, 0),
 
     AP_GROUPEND
 };
@@ -57,6 +59,10 @@ void AP_Mission::start()
 
     reset(); // reset mission to the first command, resets jump tracking
     
+	//load_breakPointIndex();
+	/*if(_nav_cmd.index>0 && _nav_cmd.index != AP_MISSION_CMD_INDEX_NONE)
+		_nav_cmd.index -= 1;*/
+		
     // advance to the first command
     if (!advance_current_nav_cmd()) {
         // on failure set mission complete
@@ -68,18 +74,26 @@ void AP_Mission::start()
 void AP_Mission::stop()
 {
     _flags.state = MISSION_STOPPED;
+	
+	if(_nav_cmd.index > 1)
+	{
+		write_breakPoint_to_storage(_nav_cmd.index-1);
+		_bp_index.set_and_save(_nav_cmd.index-1);
+	}
 }
 
 /// resume - continues the mission execution from where we last left off
 ///     previous running commands will be re-initialized
 void AP_Mission::resume()
 {
+	load_breakPointIndex();
     // if mission had completed then start it from the first command
     if (_flags.state == MISSION_COMPLETE) {
         start();
         return;
     }
 
+	
     // if mission had stopped then restart it
     if (_flags.state == MISSION_STOPPED) {
         _flags.state = MISSION_RUNNING;
@@ -177,6 +191,7 @@ bool AP_Mission::clear()
     _flags.nav_cmd_loaded = false;
     _flags.do_cmd_loaded = false;
 
+	_bp_index.set_and_save(0);
     // return success
     return true;
 }
@@ -508,6 +523,18 @@ void AP_Mission::write_home_to_storage()
     home_cmd.id = MAV_CMD_NAV_WAYPOINT;
     home_cmd.content.location = _ahrs.get_home();
     write_cmd_to_storage(0,home_cmd);
+}
+
+void AP_Mission::write_breakPoint_to_storage(uint16_t index)
+{
+	struct Location current_loc;
+	Mission_Command bp_cmd = {};
+    bp_cmd.id = 15;//MAV_CMD_NAV_WAYPOINT;
+    if (!_ahrs.get_position(current_loc)) {
+		return;
+	}
+	bp_cmd.content.location = current_loc;
+    write_cmd_to_storage(index,bp_cmd);
 }
 
 // mavlink_to_mission_cmd - converts mavlink message to an AP_Mission::Mission_Command object which can be stored to eeprom
@@ -1285,6 +1312,9 @@ void AP_Mission::complete()
 
     // callback to main program's mission complete function
     _mission_complete_fn();
+	
+	// break point clear
+	_bp_index.set_and_save(0);
 }
 
 /// advance_current_nav_cmd - moves current nav command forward

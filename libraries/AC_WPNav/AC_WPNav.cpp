@@ -171,6 +171,9 @@ void AC_WPNav::wp_and_spline_init()
 
     // initialise yaw heading to current heading target
     _flags.wp_yaw_set = false;
+	
+	// initialise pilot input alt
+	_pilotinput_alt_cm = 0.0f;
 }
 
 /// set_speed_xy - allows main code to pass target horizontal velocity for wp navigation
@@ -234,7 +237,10 @@ bool AC_WPNav::set_wp_destination(const Vector3f& destination, bool terrain_alt)
         }
         origin.z -= origin_terr_offset;
     }
-
+	
+	// convert origin to pilotalt-above
+	origin.z -= _pilotinput_alt_cm;
+	
     // set origin and destination
     return set_wp_origin_and_destination(origin, destination, terrain_alt);
 }
@@ -282,7 +288,7 @@ bool AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
     }
 
     // initialise intermediate point to the origin
-    _pos_control.set_pos_target(origin + Vector3f(0,0,origin_terr_offset));
+    _pos_control.set_pos_target(origin + Vector3f(0,0,origin_terr_offset /*+ _pilotinput_alt_cm*/));
     _track_desired = 0;             // target is at beginning of track
     _flags.reached_destination = false;
     _flags.fast_waypoint = false;   // default waypoint back to slow
@@ -298,6 +304,41 @@ bool AC_WPNav::set_wp_origin_and_destination(const Vector3f& origin, const Vecto
     _limited_speed_xy_cms = constrain_float(speed_along_track,0,_wp_speed_cms);
 
     return true;
+}
+
+
+void AC_WPNav::shift_wp_destination_from_climb_rate(float climb_rate_cms, float dt, bool force_descend)
+{
+	float alt_shift = climb_rate_cms * dt;
+	
+	_destination.z += alt_shift;
+	
+	Vector3f pos_delta = _destination - _origin;
+	Vector3f pos_delta_unit;
+	_track_length = pos_delta.length(); // get track length
+    _track_length_xy = safe_sqrt(sq(pos_delta.x)+sq(pos_delta.y));  // get horizontal track length (used to decide if we should update yaw)
+
+    // calculate each axis' percentage of the total distance to the destination
+    if (is_zero(_track_length)) {
+        // avoid possible divide by zero
+        pos_delta_unit.x = 0;
+        pos_delta_unit.y = 0;
+        pos_delta_unit.z = 0;
+    }else{
+        pos_delta_unit = pos_delta/_track_length;
+    }
+	
+	
+	float costheta = pos_delta_unit.x * _pos_delta_unit.x + pos_delta_unit.y * _pos_delta_unit.y +  pos_delta_unit.z * _pos_delta_unit.z;
+	_track_desired = _track_desired * costheta;
+	_pos_delta_unit = pos_delta_unit;
+	// calculate leash lengths
+    calculate_wp_leash_length();
+	
+	//_track_desired = 
+	_flags.reached_destination = false;
+    _flags.slowing_down = false;    // target is not slowing down yet
+    _flags.new_wp_destination = true;   // flag new waypoint so we can freeze the pos controller's feed forward and smooth the transition
 }
 
 /// shift_wp_origin_to_current_pos - shifts the origin and destination so the origin starts at the current position
@@ -357,8 +398,10 @@ bool AC_WPNav::update_zigzag_wpnav(void)
     //_pos_control.set_accel_z(_wp_accel_z_cmss);
 
     if(_mode){
+		//_pos_control.set_accel_xy(_wp_accel_cmss * 3.0f);
     	advance_u_turn(dt);
     }else {
+		
     // advance the target if necessary
     if (!advance_wp_target_along_track_xy(dt)) {
         // To-Do: handle inability to advance along track (probably because of missing terrain data)
@@ -572,7 +615,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     }
 
     // calculate 3d vector from segment's origin
-    Vector3f curr_delta = (curr_pos - Vector3f(0,0,terr_offset)) - _origin;
+    Vector3f curr_delta = (curr_pos - Vector3f(0,0,terr_offset + _pilotinput_alt_cm)) - _origin;
 
     // calculate how far along the track we are
     track_covered = curr_delta.x * _pos_delta_unit.x + curr_delta.y * _pos_delta_unit.y + curr_delta.z * _pos_delta_unit.z;
@@ -671,7 +714,7 @@ bool AC_WPNav::advance_wp_target_along_track(float dt)
     // recalculate the desired position
     Vector3f final_target = _origin + _pos_delta_unit * _track_desired;
     // convert final_target.z to altitude above the ekf origin
-    final_target.z += terr_offset;
+    final_target.z += (terr_offset + _pilotinput_alt_cm);
     _pos_control.set_pos_target(final_target);
 
     // check if we've reached the waypoint
@@ -977,13 +1020,15 @@ bool AC_WPNav::set_spline_origin_and_destination(const Vector3f& origin, const V
         // if total start+stop velocity is more than twice position difference
         // use a scaled down start and stop velocityscale the  start and stop velocities down
         float vel_scaling = pos_len / vel_len;
+
         // update spline calculator
-        update_spline_solution(origin, destination, _spline_origin_vel * vel_scaling, _spline_destination_vel * vel_scaling);
+        update_spline_solution(origin, destination, _spline_origin_vel * vel_scaling , _spline_destination_vel * vel_scaling);
     }else{
         // update spline calculator
         update_spline_solution(origin, destination, _spline_origin_vel, _spline_destination_vel);
     }
-
+	
+    
     // store origin and destination locations
     _origin = origin;
     _destination = destination;
@@ -1049,26 +1094,11 @@ bool AC_WPNav::update_spline()
     return ret;
 }
 
-/* Cubic Hermite Interpolation
- *  P(t) = a*t^3 + b*t^2 + c*t + d
- *  P'(t) = 3a*t^2 + 2b*t + c
- *  P(0) = origin = d
- *  P(1) = dest = a + b + c + d
- *  P'(0) = origin_vel = c
- *  P'(1) = dest_vel = 3a + 2b + c
- *
- *
- *  _hermite_spline_solution[0] = d = origin
- *  _hermite_spline_solution[1] = c = origin_vel
- *  _hermite_spline_solution[2] = b = -origin*3.0f -origin_vel*2.0f + dest*3.0f - dest_vel
- *  _hermite_spline_solution[3] = a = origin*2.0f + origin_vel -dest*2.0f + dest_vel
- * */
-
-
 /// update_spline_solution - recalculates hermite_spline_solution grid
 ///		relies on _spline_origin_vel, _spline_destination_vel and _origin and _destination
 void AC_WPNav::update_spline_solution(const Vector3f& origin, const Vector3f& dest, const Vector3f& origin_vel, const Vector3f& dest_vel)
 {
+	
     _hermite_spline_solution[0] = origin;
     _hermite_spline_solution[1] = origin_vel;
     _hermite_spline_solution[2] = -origin*3.0f -origin_vel*2.0f + dest*3.0f - dest_vel;
@@ -1078,12 +1108,16 @@ void AC_WPNav::update_spline_solution(const Vector3f& origin, const Vector3f& de
 /// advance_spline_target_along_track - move target location along track from origin to destination
 bool AC_WPNav::advance_spline_target_along_track(float dt)
 {
+	static int cnt=0;
     if (!_flags.reached_destination) {
         Vector3f target_pos, target_vel;
 
         // update target position and velocity from spline calculator
         calc_spline_pos_vel(_spline_time, target_pos, target_vel);
-
+		if(cnt%40 == 0){
+		hal.console->printf("spline_vel:%f  spline time:%f", _spline_vel_scaler, _spline_time_scale);
+		}
+		cnt++;
         // if target velocity is zero the origin and destination must be the same
         // so flag reached destination (and protect against divide by zero)
         float target_vel_length = target_vel.length();
@@ -1183,14 +1217,6 @@ bool AC_WPNav::advance_spline_target_along_track(float dt)
     return true;
 }
 
-/* Cubic Hermite
- * P(t) = a*t^3 + b*t^2 + c*t + d
- * P'(t) = 3a*t^2 + 2b*t + c
- * _hermite_spline_solution[0] = d
- * _hermite_spline_solution[1] = c
- * _hermite_spline_solution[2] = b
- * _hermite_spline_solution[3] = a
- * */
 // calc_spline_pos_vel_accel - calculates target position, velocity and acceleration for the given "spline_time"
 /// 	relies on update_spline_solution being called when the segment's origin and destination were set
 void AC_WPNav::calc_spline_pos_vel(float spline_time, Vector3f& position, Vector3f& velocity)

@@ -2,7 +2,7 @@
 
 // Code to detect a crash main ArduCopter code
 #define CRASH_CHECK_TRIGGER_SEC         2       // 2 seconds inverted indicates a crash
-#define CRASH_CHECK_ANGLE_DEVIATION_DEG 30.0f   // 30 degrees beyond angle max is signal we are inverted
+#define CRASH_CHECK_ANGLE_DEVIATION_DEG 45.0f   // 30 degrees beyond angle max is signal we are inverted
 #define CRASH_CHECK_ACCEL_MAX           3.0f    // vehicle must be accelerating less than 3m/s/s to be considered crashed
 
 // crash_check - disarms motors if a crash has been detected
@@ -11,34 +11,74 @@
 void Copter::crash_check()
 {
     static uint16_t crash_counter;  // number of iterations vehicle may have been crashed
+	static uint16_t crash_rollover_counter = 0;
 
     // return immediately if disarmed, or crash checking disabled
     if (!motors->armed() || ap.land_complete || g.fs_crash_check == 0) {
         crash_counter = 0;
+		crash_rollover_counter = 0;
         return;
     }
 
     // return immediately if we are not in an angle stabilize flight mode or we are flipping
     if (control_mode == ACRO || control_mode == FLIP) {
         crash_counter = 0;
+		crash_rollover_counter = 0;
         return;
     }
 
     // vehicle not crashed if 1hz filtered acceleration is more than 3m/s (1G on Z-axis has been subtracted)
-    if (land_accel_ef_filter.get().length() >= CRASH_CHECK_ACCEL_MAX) {
+    /*if (land_accel_ef_filter.get().length() >= CRASH_CHECK_ACCEL_MAX) {
         crash_counter = 0;
+		crash_rollover_counter = 0;
         return;
-    }
+    }*/
+	if(/*land_accel_ef_filter.get().z*/ins.get_accel().z > 0){
+		crash_rollover_counter++;
+		
+		if(crash_rollover_counter >= (CRASH_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz()))
+		{
+		// log an error in the dataflash
+        Log_Write_Error(ERROR_SUBSYSTEM_CRASH_CHECK, ERROR_CODE_CRASH_CHECK_CRASH);
+        // send message to gcs
+        gcs_send_text(MAV_SEVERITY_EMERGENCY,"RollOver Crash: Disarming");
+        // disarm motors
+        init_disarm_motors();
+		}
+	}
+	else
+	{
+		crash_rollover_counter = 0;
+		
+	}
 
     // check for angle error over 30 degrees
-    const float angle_error = attitude_control->get_att_error_angle_deg();
-    if (angle_error <= CRASH_CHECK_ANGLE_DEVIATION_DEG) {
+    //const float angle_error = attitude_control->get_att_error_angle_deg();
+	Vector3f target = attitude_control->get_att_target_euler_cd();
+	if(/*angle_error >= CRASH_CHECK_ANGLE_DEVIATION_DEG*/fabsf(target.x - ahrs.roll_sensor) > 4500 || fabsf(target.y - ahrs.pitch_sensor) > 4500)
+	{
+		crash_counter++;
+		if(crash_counter >= (CRASH_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz()))
+		{
+			        // log an error in the dataflash
+        Log_Write_Error(ERROR_SUBSYSTEM_CRASH_CHECK, ERROR_CODE_CRASH_CHECK_CRASH);
+        // send message to gcs
+        gcs_send_text(MAV_SEVERITY_EMERGENCY,"Crash: Disarming");
+        // disarm motors
+        init_disarm_motors();
+		}
+	}
+	else
+	{
+		crash_counter = 0;
+	}
+    /*if (angle_error <= CRASH_CHECK_ANGLE_DEVIATION_DEG) {
         crash_counter = 0;
         return;
-    }
+    }*/
 
     // we may be crashing
-    crash_counter++;
+    /*crash_counter++;
 
     // check if crashing for 2 seconds
     if (crash_counter >= (CRASH_CHECK_TRIGGER_SEC * scheduler.get_loop_rate_hz())) {
@@ -48,7 +88,7 @@ void Copter::crash_check()
         gcs_send_text(MAV_SEVERITY_EMERGENCY,"Crash: Disarming");
         // disarm motors
         init_disarm_motors();
-    }
+    }*/
 }
 
 #if PARACHUTE == ENABLED

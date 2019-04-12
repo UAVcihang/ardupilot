@@ -400,6 +400,20 @@ public:
     /// write_home_to_storage - writes the special purpose cmd 0 (home) to storage
     ///     home is taken directly from ahrs
     void write_home_to_storage();
+	
+	/// write_breakPoint_to_storage - writes the current point to storage
+	void write_breakPoint_to_storage(uint16_t index);
+	void load_breakPointIndex()
+	{
+		_nav_cmd.index = (_bp_index != 0)?(uint16_t)(_bp_index):AP_MISSION_CMD_INDEX_NONE;
+		//_flags.state = MISSION_STOPPED;
+		_flags.nav_cmd_loaded = true;
+	}
+	
+	void set_breakPointIndex(uint16_t idx)
+	{
+		_bp_index.set_and_save(idx);
+	}
 
     // mavlink_to_mission_cmd - converts mavlink message to an AP_Mission::Mission_Command object which can be stored to eeprom
     //  return MAV_MISSION_ACCEPTED on success, MAV_MISSION_RESULT error on failure
@@ -494,7 +508,8 @@ private:
     // parameters
     AP_Int16                _cmd_total;  // total number of commands in the mission
     AP_Int8                 _restart;   // controls mission starting point when entering Auto mode (either restart from beginning of mission or resume from last command run)
-
+	AP_Int16                _bp_index;
+	
     // pointer to main program functions
     mission_cmd_fn_t        _cmd_start_fn;  // pointer to function which will be called when a new command is started
     mission_cmd_fn_t        _cmd_verify_fn; // pointer to function which will be called repeatedly to ensure a command is progressing

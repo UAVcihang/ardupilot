@@ -256,17 +256,24 @@ void Copter::auto_wp_run()
 
     // process pilot's yaw input
     float target_yaw_rate = 0;
+	float target_climb_rate = 0;
     if (!failsafe.radio) {
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
         if (!is_zero(target_yaw_rate)) {
             set_auto_yaw_mode(AUTO_YAW_HOLD);
         }
+		
+		// get pilot desired climb rate
+        target_climb_rate = get_pilot_desired_climb_rate(channel_throttle->get_control_in());
+        target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
     }
 
     // set motors to full range
     motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
 
+	wp_nav->set_pilotinput_alt_from_climb_rate(target_climb_rate, G_Dt);
+	//wp_nav->shift_wp_destination_from_climb_rate(target_climb_rate, G_Dt, false);
     // run waypoint controller
     failsafe_terrain_set_status(wp_nav->update_wpnav());
 
@@ -542,8 +549,12 @@ bool Copter::auto_loiter_start()
     Vector3f stopping_point;
     wp_nav->get_wp_stopping_point(stopping_point);
 
+	wp_nav->reset_pilotinput_alt();
     // initialise waypoint controller target to stopping point
     wp_nav->set_wp_destination(stopping_point);
+	
+	//hal.console->printf("\n stop point alt:%.2f", stopping_point.z);
+	//hal.console->printf("\n pilot intput alt:%.2f", wp_nav->get_pilotinput_alt());
 
     // hold yaw at current heading
     set_auto_yaw_mode(AUTO_YAW_HOLD);
