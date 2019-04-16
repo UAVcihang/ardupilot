@@ -66,6 +66,8 @@ public:
         _motors(motors)
         {
             AP_Param::setup_object_defaults(this, var_info);
+
+            _land_maybe = false;
         }
 
     // Empty destructor to suppress compiler warning
@@ -89,6 +91,11 @@ public:
 	virtual void set_rate_adrc() = 0;
 
 	virtual void set_rate_indi() = 0;
+
+	void set_land_maybe(bool land_maybe)
+	{
+		_land_maybe = land_maybe;
+	}
 
     // get the roll acceleration limit in centidegrees/s/s or radians/s/s
     float get_accel_roll_max() const { return _accel_roll_max; }
@@ -449,6 +456,8 @@ protected:
     // true in inverted flight mode
     bool _inverted_flight;
     
+    bool _land_maybe;
+
 public:
     // log a CTRL message
     void control_monitor_log(void);

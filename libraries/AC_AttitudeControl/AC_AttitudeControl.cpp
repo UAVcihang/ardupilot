@@ -1049,9 +1049,11 @@ float AC_AttitudeControl::rate_target_to_motor_roll(float rate_actual_rads, floa
 
     float integrator = get_rate_roll_pid().get_integrator();
 
+    if(!_land_maybe){
     // Ensure that integrator can only be reduced if the output is saturated
     if (!_motors.limit.roll_pitch || ((is_positive(integrator) && is_negative(rate_error_rads)) || (is_negative(integrator) && is_positive(rate_error_rads)))) {
         integrator = get_rate_roll_pid().get_i();
+    }
     }
 
     // Compute output in range -1 ~ +1
@@ -1072,9 +1074,11 @@ float AC_AttitudeControl::rate_target_to_motor_pitch(float rate_actual_rads, flo
 
     float integrator = get_rate_pitch_pid().get_integrator();
 
+    if(!_land_maybe){
     // Ensure that integrator can only be reduced if the output is saturated
     if (!_motors.limit.roll_pitch || ((is_positive(integrator) && is_negative(rate_error_rads)) || (is_negative(integrator) && is_positive(rate_error_rads)))) {
         integrator = get_rate_pitch_pid().get_i();
+    }
     }
 
     // Compute output in range -1 ~ +1
@@ -1095,9 +1099,11 @@ float AC_AttitudeControl::rate_target_to_motor_yaw(float rate_actual_rads, float
 
     float integrator = get_rate_yaw_pid().get_integrator();
 
+    if(!_land_maybe){
     // Ensure that integrator can only be reduced if the output is saturated
     if (!_motors.limit.yaw || ((is_positive(integrator) && is_negative(rate_error_rads)) || (is_negative(integrator) && is_positive(rate_error_rads)))) {
         integrator = get_rate_yaw_pid().get_i();
+    }
     }
 
     // Compute output in range -1 ~ +1
