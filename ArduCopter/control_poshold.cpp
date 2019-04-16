@@ -184,9 +184,13 @@ void Copter::poshold_run()
     }
 
     // relax loiter target if we might be landed
-    if (ap.land_complete_maybe) {
-    	loiter_nav->soften_for_landing();
-    }
+        if (ap.land_complete_maybe) {
+            loiter_nav->soften_for_landing();
+            attitude_control->set_land_maybe(true);
+        }
+        else{
+        	attitude_control->set_land_maybe(false);
+        }
 
     // if landed initialise loiter targets, set throttle to zero and exit
     if (ap.land_complete) {

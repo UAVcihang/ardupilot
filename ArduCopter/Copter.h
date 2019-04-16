@@ -142,7 +142,7 @@
 //#include <AC_UKF/AC_UKF.h>
 
 // 流量计 接AUX5口 检测pwm个数
-//#include <AC_Flowermeter/AC_Flowermeter.h>
+#include <AC_Flowermeter/AC_Flowermeter.h>
 
 
 class Copter : public AP_HAL::HAL::Callbacks {
@@ -232,7 +232,7 @@ private:
     // MQTT
     //AC_MQTT mqtt{&ahrs};
     // 流量计
-    //AC_Flowermeter flowermeter;
+    AC_Flowermeter flowermeter;
     // Mission library
     AP_Mission mission;
 
@@ -1264,7 +1264,7 @@ private:
     void dataflash_periodic(void);
     void accel_cal_update(void);
     // 往串口发送MQTT协议的数据
-    void send_mqtt(void);
+    //void send_mqtt(void);
 
 public:
     void mavlink_delay_cb();

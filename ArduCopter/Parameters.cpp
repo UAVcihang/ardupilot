@@ -842,6 +842,10 @@ const AP_Param::Info Copter::var_info[] = {
 
     // @Group: ADSB_
     // @Path: ../libraries/AP_ADSB/AP_ADSB.cpp
+    GOBJECT(flowermeter,                "FL_", AC_Flowermeter),
+
+    // @Group: ADSB_
+    // @Path: ../libraries/AP_ADSB/AP_ADSB.cpp
     GOBJECT(adsb,                "ADSB_", AP_ADSB),
 
     // @Group: AVD_

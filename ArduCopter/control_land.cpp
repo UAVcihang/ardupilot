@@ -219,6 +219,10 @@ void Copter::land_run_horizontal_control()
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
         loiter_nav->soften_for_landing();
+        attitude_control->set_land_maybe(true);
+    }
+    else{
+    	attitude_control->set_land_maybe(false);
     }
     
     // process pilot inputs

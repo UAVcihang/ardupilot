@@ -188,7 +188,7 @@ void Copter::read_receiver_rssi(void)
 
 void Copter::compass_cal_update()
 {
-    static uint32_t compass_cal_stick_gesture_begin = 0;
+    // static uint32_t compass_cal_stick_gesture_begin = 0;
     static float x,y,z;
 
 	// 如果无罗盘 则不进入校准

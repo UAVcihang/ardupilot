@@ -89,7 +89,8 @@ void Copter::auto_run()
         break;
 
     case Auto_Loiter:
-        auto_loiter_run();
+    	loiter_run();
+        //auto_loiter_run();
         break;
 
     case Auto_NavPayloadPlace:
@@ -256,8 +257,13 @@ void Copter::auto_wp_run()
 
     // process pilot's yaw input
     float target_yaw_rate = 0;
+    float target_roll = 0, target_pitch = 0;
 	float target_climb_rate = 0;
     if (!failsafe.radio) {
+
+        // To-Do: convert get_pilot_desired_lean_angles to return angles as floats
+    	get_pilot_desired_lean_angles(target_roll, target_pitch, aparm.angle_max, attitude_control->get_althold_lean_angle_max());
+
         // get pilot's desired yaw rate
         target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
         if (!is_zero(target_yaw_rate)) {
@@ -269,6 +275,10 @@ void Copter::auto_wp_run()
         target_climb_rate = constrain_float(target_climb_rate, -get_pilot_speed_dn(), g.pilot_speed_up);
     }
 
+    if(fabsf(target_roll) > aparm.angle_max / 15.0f || fabsf(target_pitch) > aparm.angle_max / 15.0f){
+    	auto_loiter_start();
+    	return;
+    }
     // set motors to full range
     motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
 

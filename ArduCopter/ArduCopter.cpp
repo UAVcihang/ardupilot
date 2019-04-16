@@ -104,11 +104,11 @@ const AP_Scheduler::Task Copter::scheduler_tasks[] = {
     SCHED_TASK(compass_accumulate,   100,    100),
     SCHED_TASK(barometer_accumulate,  50,     90),
     // 添加发送MQTT协议数据的任务 1Hz
-    SCHED_TASK(send_mqtt,              1,     500),
+    // SCHED_TASK(send_mqtt,              1,     500),
 
     // UKF更新任务
 	//SCHED_TASK(update_ukf,           200,     200),
-    SCHED_TASK(update_flowermeter, 10,     100),
+    SCHED_TASK(update_flowermeter, 5,     100),
 #if PRECISION_LANDING == ENABLED
     SCHED_TASK(update_precland,      400,     50),
 #endif
@@ -489,10 +489,10 @@ void Copter::three_hz_loop()
 }
 
 // 发送MQTT数据
-void Copter::send_mqtt()
+/*void Copter::send_mqtt()
 {
 	//mqtt.update();
-}
+}*/
 
 // one_hz_loop - runs at 1Hz
 void Copter::one_hz_loop()
@@ -537,7 +537,8 @@ void Copter::one_hz_loop()
     // functioning correctly
     update_sensor_status_flags();
 
-    //hal.console->printf("Flowermeter pwm total\n"/*, flowermeter.get_totallyCount(), flowermeter.get_pwmCount(), flowermeter.get_flowerVel()*/);
+    //hal.console->printf("Flowermeter pwm total %llu vel %11u pwm_pos %.2f\n",  flowermeter.get_pwmCount(), flowermeter.get_cur_flowerVel(), sprayer.get_pwm_pos());
+
 
 
     //char buf[256];
@@ -673,45 +674,22 @@ void Copter::update_altitude()
 // 读取流量计数据
 void Copter::update_flowermeter()
 {
-/*	static uint64_t last_of_update = 0;
-	static uint32_t true_cnt=0;
-	static uint32_t false_cnt = 0;
-	//Vector3f vel = inertial_nav.get_velocity();
-    // 更新流量计
     flowermeter.update();
+	//hal.console->printf("angle error %.2f, acc z %.2f\n", attitude_control->get_thrust_error_angle(), ins.get_accel().z);
 
-    uint16_t pwm = 0;
-    if(!SRV_Channels::get_output_pwm(SRV_Channel::k_sprayer_pump, pwm))
-    {
-    	// 没有开启水泵功能
-    	return;
-    }
+	if((control_mode != RTL && control_mode != LAND) && flowermeter.isEmpty()) {
+		failsafe_drug_event();
+		sprayer.run(false);
+		gcs_send_text(MAV_SEVERITY_WARNING, "Drug empty");
+		return;
+	}
 
-    if(flowermeter.last_update() != last_of_update ) {
-
-    	last_of_update = flowermeter.last_update();
-    	if(true_cnt > 10 && !flowermeter.get_valid()){
-    		flowermeter.set_valid(true);
-    	}
-    	true_cnt++;
-    	false_cnt = 0;
-
-    }
-    else{
-    	if((pwm > 1200) && flowermeter.get_valid()){
-    		false_cnt++;
-    		true_cnt = 0;
-    		if(false_cnt > 10){
-    			flowermeter.set_valid(false);
-    			//true_cnt = 0;
-    			false_cnt = 0;
-    			// 药量与电量保护使用同一函数
-    			//failsafe_battery_event();
-    			failsafe_drug_event();
-    		}
-    	}
-
-    }*/
+	if(!flowermeter.isEmpty()) {
+		//sprayer.set_ratio()
+		flowermeter.set_width(g.Zigzag_width);
+		// wp_nav->set_speed_xy(flowermeter.get_maxFlyVel() * 100.0f);
+		sprayer.update();
+	}
 }
 
 AP_HAL_MAIN_CALLBACKS(&copter);

@@ -117,7 +117,11 @@ void Copter::loiter_run()
 
     // relax loiter target if we might be landed
     if (ap.land_complete_maybe) {
-    	loiter_nav->soften_for_landing();
+        loiter_nav->soften_for_landing();
+        attitude_control->set_land_maybe(true);
+    }
+    else{
+    	attitude_control->set_land_maybe(false);
     }
 
 #if FRAME_CONFIG == HELI_FRAME

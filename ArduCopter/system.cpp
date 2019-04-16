@@ -309,7 +309,7 @@ void Copter::init_ardupilot()
     mission.init();
 
     // Á÷Á¿¼Æ
-    //flowermeter.init();
+    flowermeter.init(0.2f);
 
     // initialise DataFlash library
     DataFlash.set_mission(&mission);

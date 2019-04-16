@@ -48,8 +48,9 @@ const AP_Param::GroupInfo AC_Sprayer::var_info[] = {
     AP_GROUPEND
 };
 
-AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav) :
+AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav, AC_Flowermeter &flower) :
     _inav(inav),
+	_flower(flower),
     _speed_over_min_time(0),
     _speed_under_min_time(0)
 {
@@ -62,7 +63,8 @@ AC_Sprayer::AC_Sprayer(const AP_InertialNav* inav) :
     if (_spinner_pwm < 0) {
         _spinner_pwm.set_and_save(AC_SPRAYER_DEFAULT_SPINNER_PWM);
     }
-
+	
+	_pwm_pos = 800.0f;
     // To-Do: ensure that the pump and spinner servo channels are enabled
 }
 
@@ -89,6 +91,7 @@ void AC_Sprayer::stop_spraying()
     SRV_Channels::set_output_limit(SRV_Channel::k_sprayer_spinner, SRV_Channel::SRV_CHANNEL_LIMIT_MIN);
 
     _flags.spraying = false;
+	_pwm_pos = 5000.0f;
 }
 
 /// update - adjust pwm of servo controlling pump speed according to the desired quantity and our horizontal speed
@@ -149,18 +152,21 @@ AC_Sprayer::update()
         _speed_over_min_time = 0;
     }
 
-    // if testing pump output speed as if traveling at 1m/s
+    // if testing pump output speed as if traveling at 6m/s
     if (_flags.testing) {
-        ground_speed = 100.0f;
+        ground_speed = 600.0f;
         should_be_spraying = true;
     }
-
+	//hal.console->printf("sprayer %.2f, refpwm %.2f\n", _pwm_pos, _flower.get_refPwm());
     // if spraying or testing update the pump servo position
     if (should_be_spraying) {
-        float pos = ground_speed * _pump_pct_1ms;
+        /*float pos = ground_speed * _pump_pct_1ms;
         pos = MAX(pos, 100 *_pump_min_pct); // ensure min pump speed
-        pos = MIN(pos,10000); // clamp to range
-        SRV_Channels::move_servo(SRV_Channel::k_sprayer_pump, pos, 0, 10000);
+        pos = MIN(pos,10000); // clamp to range*/
+		_pwm_pos += (_flower.get_refPwm() - _flower.get_cur_flowerVel()) * _pump_pct_1ms;
+		_pwm_pos = MAX(_pwm_pos, 100 *_pump_min_pct); // ensure min pump speed
+		_pwm_pos = MIN(_pwm_pos,10000); // clamp to range*/
+        SRV_Channels::move_servo(SRV_Channel::k_sprayer_pump, /*pos*/_pwm_pos, 0, 10000);
         SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_spinner, _spinner_pwm);
         _flags.spraying = true;
     }else{

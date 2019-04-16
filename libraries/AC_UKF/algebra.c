@@ -8,6 +8,7 @@
 
 #define MIN(a, b) ((a < b) ? a : b)
 #define MAX(a, b) ((a > b) ? a : b)
+#define ISZERO(a) (a > -1E-7 && a < 1E-7)
 
 // allocates memory from 64KB CCM
 void *aqDataCalloc(uint16_t count, uint16_t size) {
@@ -84,7 +85,7 @@ int qrDecompositionT_f32(arm_matrix_instance_f32 *A, arm_matrix_instance_f32 *Q,
             if (A->pData[minor*m + minor] > 0.0f)
                     a = -a;
 
-            if (a != 0.0f) {
+            if (!ISZERO(a)) {
                     R->pData[minor*R->numCols + minor] = a;
 
                     /*
@@ -153,7 +154,7 @@ int qrDecompositionT_f32(arm_matrix_instance_f32 *A, arm_matrix_instance_f32 *Q,
             for (minor = min-1; minor >= 0; minor--) {
                     Q->pData[minor * m + minor] = 1.0f;
 
-                    if (A->pData[minor*m + minor] != 0.0f) {
+                    if (/*A->pData[minor*m + minor] != 0.0f*/!ISZERO(A->pData[minor*m + minor])) {
                             for (col = minor; col < m; col++) {
                                     float alpha = 0.0f;
 

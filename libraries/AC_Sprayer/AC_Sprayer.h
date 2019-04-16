@@ -20,6 +20,7 @@
 #include <AP_Math/AP_Math.h>
 #include <SRV_Channel/SRV_Channel.h>
 #include <AP_InertialNav/AP_InertialNav.h>     // Inertial Navigation library
+#include <AC_Flowermeter/AC_Flowermeter.h>
 
 #define AC_SPRAYER_DEFAULT_PUMP_RATE        10.0f   ///< default quantity of spray per meter travelled
 #define AC_SPRAYER_DEFAULT_PUMP_MIN         0       ///< default minimum pump speed expressed as a percentage from 0 to 100
@@ -35,7 +36,7 @@ class AC_Sprayer {
 public:
 
     /// Constructor
-    AC_Sprayer(const AP_InertialNav* inav);
+    AC_Sprayer(const AP_InertialNav* inav, AC_Flowermeter &flower);
 
     /// run - allow or disallow spraying to occur
     void run(bool true_false);
@@ -56,12 +57,19 @@ public:
 
     /// update - adjusts servo positions based on speed and requested quantity
     void update();
+	
+	float get_pwm_pos(){
+		return _pwm_pos;
+	}
+	
+	// void reset_pwm_pos()
 
     static const struct AP_Param::GroupInfo var_info[];
 
 private:
     const AP_InertialNav* const _inav;      ///< pointers to other objects we depend upon
 
+	AC_Flowermeter &_flower;
     // parameters
     AP_Int8         _enabled;               ///< top level enable/disable control
     AP_Float        _pump_pct_1ms;          ///< desired pump rate (expressed as a percentage of top rate) when travelling at 1m/s
@@ -79,6 +87,6 @@ private:
     // internal variables
     uint32_t        _speed_over_min_time;   ///< time at which we reached speed minimum
     uint32_t        _speed_under_min_time;  ///< time at which we fell below speed minimum
-
+	float           _pwm_pos;
     void stop_spraying();
 };

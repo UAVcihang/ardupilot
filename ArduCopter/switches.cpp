@@ -32,6 +32,8 @@ void Copter::read_multiaux_switches()
 	int8_t switch_position;
 	uint16_t rc7_in = RC_Channels::rc_channel(CH_7)->get_radio_in();
 	uint16_t rc6_in = RC_Channels::rc_channel(CH_6)->get_radio_in();
+	uint16_t rc6_in_min = RC_Channels::rc_channel(CH_6)->get_radio_min();
+	uint16_t rc6_in_max = RC_Channels::rc_channel(CH_6)->get_radio_max();
     if      (rc7_in < 1131) switch_position = 0; // Initial, no input
     else if (rc7_in < 1261) switch_position = 1; // Pump on
     else if (rc7_in < 1391) switch_position = 2; // Pump off
@@ -90,6 +92,7 @@ void Copter::read_multiaux_switches()
     // exit immediately if the pump function has not been set-up for any servo
     if (SRV_Channels::function_assigned(SRV_Channel::k_sprayer_pump) && (control_mode != ZIGZAG && control_mode != AUTO)) {
     	SRV_Channels::set_output_pwm(SRV_Channel::k_sprayer_pump, rc6_in);
+    	flowermeter.set_flowerVel((rc6_in - rc6_in_min) / (rc6_in_max - rc6_in_min));
     }
 }
 
