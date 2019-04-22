@@ -442,6 +442,9 @@ private:
     uint8_t motor_spin_loop_count;
     uint8_t motor_num;
 
+    // 中断任务时，任务所在航点位置
+    uint16_t mission_interrupt_idx;
+
     // Guided
     GuidedMode guided_mode;  // controls which controller is run (pos or vel)
 
@@ -479,8 +482,8 @@ private:
     uint32_t loiter_time;                    // How long have we been loitering - The start time in millis
 
     // Brake
-    /*uint32_t brake_timeout_start;
-    uint32_t brake_timeout_ms;*/
+    uint32_t brake_timeout_start;
+    uint32_t brake_timeout_ms;
 
     // Delay the next navigation command
     int32_t nav_delay_time_max;  // used for delaying the navigation commands (eg land,takeoff etc.)
@@ -900,6 +903,12 @@ private:
     void auto_nav_guided_run();
     bool auto_loiter_start();
     void auto_loiter_run();
+    void auto_wp_interrupt_start();
+    void auto_wp_interrupt_run();
+    void auto_wp_continue_start(const Location_Class& dest_loc, uint16_t mission_idx);
+    void auto_wp_continue_run();
+    void auto_wp_over_start();
+    void auto_wp_over_run();
     uint8_t get_default_auto_yaw_mode(bool rtl);
     void set_auto_yaw_mode(uint8_t yaw_mode);
     void set_auto_yaw_look_at_heading(float angle_deg, float turn_rate_dps, int8_t direction, bool relative_angle);
@@ -935,8 +944,8 @@ private:
     void afs_fs_check(void);
 #endif
     /*bool brake_init(bool ignore_checks);
-    void brake_run();
-    void brake_timeout_to_loiter_ms(uint32_t timeout_ms);*/
+    void brake_run();*/
+    void brake_timeout_to_loiter_ms(uint32_t timeout_ms);
     bool circle_init(bool ignore_checks);
     void circle_run();
     //bool drift_init(bool ignore_checks);

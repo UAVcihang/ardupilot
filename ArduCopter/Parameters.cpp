@@ -881,6 +881,13 @@ const AP_Param::Info Copter::var_info[] = {
     // @User: Standard
     GSCALAR(radio_type, "rc_type", 0),
 
+    // @Param: radio_mode
+    // @DisplayName: radio_mode
+    // @Description: radio_mode
+    // @Range: 0-1 0:美国手  1:日本手
+    // @User: Standard
+    GSCALAR(radio_mode, "rc_mode", 0),
+
     // @Param: Zigzag_time
     // @DisplayName: Zigzag_time
     // @Description: AB/Break Point record time(minutes)

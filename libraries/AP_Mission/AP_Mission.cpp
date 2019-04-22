@@ -22,7 +22,7 @@ const AP_Param::GroupInfo AP_Mission::var_info[] = {
     // @User: Advanced
     AP_GROUPINFO("RESTART",  1, AP_Mission, _restart, AP_MISSION_RESTART_DEFAULT),
 	
-	AP_GROUPINFO("BP_IDX",  2, AP_Mission, _bp_index, 0),
+	// AP_GROUPINFO("BP_IDX",  2, AP_Mission, _bp_index, 0),
 
     AP_GROUPEND
 };
@@ -75,18 +75,18 @@ void AP_Mission::stop()
 {
     _flags.state = MISSION_STOPPED;
 	
-	if(_nav_cmd.index > 1)
+	/*if(_nav_cmd.index > 1)
 	{
 		write_breakPoint_to_storage(_nav_cmd.index-1);
 		_bp_index.set_and_save(_nav_cmd.index-1);
-	}
+	}*/
 }
 
 /// resume - continues the mission execution from where we last left off
 ///     previous running commands will be re-initialized
 void AP_Mission::resume()
 {
-	load_breakPointIndex();
+	//load_breakPointIndex();
     // if mission had completed then start it from the first command
     if (_flags.state == MISSION_COMPLETE) {
         start();
@@ -191,7 +191,7 @@ bool AP_Mission::clear()
     _flags.nav_cmd_loaded = false;
     _flags.do_cmd_loaded = false;
 
-	_bp_index.set_and_save(0);
+	//_bp_index.set_and_save(0);
     // return success
     return true;
 }
@@ -525,7 +525,7 @@ void AP_Mission::write_home_to_storage()
     write_cmd_to_storage(0,home_cmd);
 }
 
-void AP_Mission::write_breakPoint_to_storage(uint16_t index)
+/*void AP_Mission::write_breakPoint_to_storage(uint16_t index)
 {
 	struct Location current_loc;
 	Mission_Command bp_cmd = {};
@@ -535,7 +535,7 @@ void AP_Mission::write_breakPoint_to_storage(uint16_t index)
 	}
 	bp_cmd.content.location = current_loc;
     write_cmd_to_storage(index,bp_cmd);
-}
+}*/
 
 // mavlink_to_mission_cmd - converts mavlink message to an AP_Mission::Mission_Command object which can be stored to eeprom
 //  return MAV_MISSION_ACCEPTED on success, MAV_MISSION_RESULT error on failure
@@ -1314,7 +1314,7 @@ void AP_Mission::complete()
     _mission_complete_fn();
 	
 	// break point clear
-	_bp_index.set_and_save(0);
+	//_bp_index.set_and_save(0);
 }
 
 /// advance_current_nav_cmd - moves current nav command forward

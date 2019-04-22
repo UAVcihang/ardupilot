@@ -1014,6 +1014,13 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
         v[6] = packet.chan7_raw;
         v[7] = packet.chan8_raw;
 
+        // 日本手 3 4通道调换
+        if(copter.g.radio_mode != 0)
+        {
+            v[1] = packet.chan3_raw;
+            v[2] = packet.chan2_raw;
+        }
+
         // record that rc are overwritten so we can trigger a failsafe if we lose contact with groundstation
         copter.failsafe.rc_override_active = hal.rcin->set_overrides(v, 8);
 
@@ -1579,6 +1586,12 @@ void GCS_MAVLINK_Copter::handleMessage(mavlink_message_t* msg)
                 result = MAV_RESULT_ACCEPTED;
             }
             break;
+
+        case MAV_CMD_EMERGENCY_STOP:
+        	result = MAV_RESULT_ACCEPTED;
+        	copter.set_motor_emergency_stop(true);
+
+        	break;
 
         default:
             result = MAV_RESULT_UNSUPPORTED;

@@ -207,6 +207,9 @@ enum AutoMode {
     Auto_NavGuided,
     Auto_Loiter,
     Auto_NavPayloadPlace,
+    Auto_WP_Interrupt,
+    Auto_WP_Continue,
+    Auto_WP_Over,
 };
 
 // add by weihli for zigzag mode

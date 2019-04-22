@@ -690,6 +690,7 @@ void Copter::allocate_motors(void)
         AP_HAL::panic("Unable to allocate AttitudeControl");
     }
     AP_Param::load_object_from_eeprom(attitude_control, ac_var_info);
+
     attitude_control->set_rate_adrc();
     attitude_control->set_rate_indi();
     /*pos_control = new AC_PosControl(*ahrs_view, inertial_nav, *motors, *attitude_control,
@@ -718,7 +719,7 @@ void Copter::allocate_motors(void)
         AP_HAL::panic("Unable to allocate CircleNav");
     }
     AP_Param::load_object_from_eeprom(circle_nav, circle_nav->var_info);
-
+    //hal.console->printf("load success\n");
     // reload lines from the defaults file that may now be accessible
     AP_Param::reload_defaults_file();
     

@@ -96,6 +96,18 @@ void Copter::auto_run()
     case Auto_NavPayloadPlace:
         auto_payload_place_run();
         break;
+
+    case Auto_WP_Interrupt:
+    	auto_wp_interrupt_run();
+    	break;
+
+    case Auto_WP_Continue:
+    	auto_wp_continue_run();
+    	break;
+
+    case Auto_WP_Over:
+    	auto_wp_over_run();
+    	break;
     }
 }
 
@@ -276,7 +288,8 @@ void Copter::auto_wp_run()
     }
 
     if(fabsf(target_roll) > aparm.angle_max / 15.0f || fabsf(target_pitch) > aparm.angle_max / 15.0f){
-    	auto_loiter_start();
+    	// auto_loiter_start();
+    	auto_wp_interrupt_start();
     	return;
     }
     // set motors to full range
@@ -298,6 +311,209 @@ void Copter::auto_wp_run()
         // roll, pitch from waypoint controller, yaw heading from auto_heading()
         attitude_control->input_euler_angle_roll_pitch_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), get_auto_heading(),true/*, get_smoothing_gain()*/);
     }
+}
+
+void Copter::brake_timeout_to_loiter_ms(uint32_t timeout_ms)
+{
+    brake_timeout_start = millis();
+    brake_timeout_ms = timeout_ms;
+}
+
+void Copter::auto_wp_interrupt_start()
+{
+	// 关闭水泵
+	sprayer.run(false);
+    // return failure if GPS is bad
+    if (!position_ok()) {
+        return;
+    }
+    auto_mode = Auto_WP_Interrupt;
+
+	wp_nav->reset_pilotinput_alt();
+#if 0
+    // calculate stopping point
+    Vector3f stopping_point;
+    wp_nav->get_wp_stopping_point(stopping_point);
+
+    // initialise waypoint controller target to stopping point
+    wp_nav->set_wp_destination(stopping_point);
+#else
+    wp_nav->init_brake_target(BRAKE_MODE_DECEL_RATE);
+    brake_timeout_ms = 0;
+#endif
+
+    // hold yaw at current heading
+    set_auto_yaw_mode(AUTO_YAW_HOLD);
+
+    brake_timeout_to_loiter_ms(1000);
+    // return true;
+}
+
+void Copter::auto_wp_interrupt_run()
+{
+#if 0
+	// 刹车，等速度较小后再可控
+	const Vector3f& vel = inertial_nav.get_velocity();
+	float speed = sqrtf(vel.x * vel.x + vel.y * vel.y);
+
+	if(speed <100)
+	{
+		auto_loiter_start();
+		return;
+	}
+
+    // accept pilot input of yaw
+    float target_yaw_rate = 0;
+    if(!failsafe.radio) {
+        target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
+    }
+
+    // set motors to full range
+    motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
+
+    // run waypoint and z-axis position controller
+    failsafe_terrain_set_status(wp_nav->update_wpnav());
+
+    pos_control->update_z_controller();
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), target_yaw_rate/*, get_smoothing_gain()*/);
+#else
+    // set motors to full range
+    motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
+
+    // run brake controller
+    wp_nav->update_brake(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+    // call attitude controller
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), 0.0f);
+
+    // body-frame rate controller is run directly from 100hz loop
+
+    // update altitude target and call position controller
+    pos_control->set_alt_target_from_climb_rate_ff(0.0f, G_Dt, false);
+    pos_control->update_z_controller();
+
+    if (brake_timeout_ms != 0 && millis()-brake_timeout_start >= brake_timeout_ms) {
+        /*if (!set_mode(LOITER, MODE_REASON_BRAKE_TIMEOUT)) {
+            set_mode(ALT_HOLD, MODE_REASON_BRAKE_TIMEOUT);
+        }*/
+    	pos_control->set_accel_xy(wp_nav->get_wp_acceleration());
+    	auto_loiter_start();
+    }
+#endif
+}
+
+void Copter::auto_wp_continue_start(const Location_Class& dest_loc, uint16_t mission_idx)
+{
+    auto_mode = Auto_WP_Continue;
+
+    // send target to waypoint controller
+    if (!wp_nav->set_wp_destination(dest_loc)) {
+        // failure to set destination can only be because of missing terrain data
+        failsafe_terrain_on_event();
+        return;
+    }
+
+    // initialise yaw
+    // To-Do: reset the yaw only when the previous navigation command is not a WP.  this would allow removing the special check for ROI
+    if (auto_yaw_mode != AUTO_YAW_ROI) {
+        set_auto_yaw_mode(get_default_auto_yaw_mode(false));
+    }
+
+    pos_control->set_accel_xy(wp_nav->get_wp_acceleration());
+    mission_interrupt_idx = mission_idx;
+}
+
+void Copter::auto_wp_continue_run()
+{
+    // check if we have reached the waypoint
+    if( wp_nav->reached_wp_destination() ) {
+    	mission.recover(mission_interrupt_idx);
+    	return;
+        // return false;
+    }
+
+	auto_wp_run();
+}
+
+void Copter::auto_wp_over_start()
+{
+	// 关闭水泵
+	sprayer.run(false);
+    // return failure if GPS is bad
+    if (!position_ok()) {
+        return;
+    }
+    auto_mode = Auto_WP_Over;
+	wp_nav->reset_pilotinput_alt();
+#if 0
+    // calculate stopping point
+    Vector3f stopping_point;
+    wp_nav->get_wp_stopping_point(stopping_point);
+    // initialise waypoint controller target to stopping point
+    wp_nav->set_wp_destination(stopping_point);
+#else
+    wp_nav->init_brake_target(BRAKE_MODE_DECEL_RATE);
+    brake_timeout_ms = 0;
+#endif
+    // hold yaw at current heading
+    set_auto_yaw_mode(AUTO_YAW_HOLD);
+
+    brake_timeout_to_loiter_ms(1000);
+    // return true;
+}
+
+void Copter::auto_wp_over_run()
+{
+#if 0
+	// 刹车，等速度较小后再可控
+	const Vector3f& vel = inertial_nav.get_velocity();
+	float speed = sqrtf(vel.x * vel.x + vel.y * vel.y);
+
+	if(speed <100)
+	{
+		//auto_loiter_start();
+		set_mode(LOITER, MODE_REASON_MISSION_END);
+		return;
+	}
+
+    // accept pilot input of yaw
+    float target_yaw_rate = 0;
+    if(!failsafe.radio) {
+        target_yaw_rate = get_pilot_desired_yaw_rate(channel_yaw->get_control_in());
+    }
+
+    // set motors to full range
+    motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
+
+    // run waypoint and z-axis position controller
+    failsafe_terrain_set_status(wp_nav->update_wpnav());
+
+    pos_control->update_z_controller();
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), target_yaw_rate/*, get_smoothing_gain()*/);
+#else
+    // set motors to full range
+    motors->set_desired_spool_state(AP_Motors::DESIRED_THROTTLE_UNLIMITED);
+
+    // run brake controller
+    wp_nav->update_brake(ekfGndSpdLimit, ekfNavVelGainScaler);
+
+    // call attitude controller
+    attitude_control->input_euler_angle_roll_pitch_euler_rate_yaw(wp_nav->get_roll(), wp_nav->get_pitch(), 0.0f);
+
+    // body-frame rate controller is run directly from 100hz loop
+
+    // update altitude target and call position controller
+    pos_control->set_alt_target_from_climb_rate_ff(0.0f, G_Dt, false);
+    pos_control->update_z_controller();
+
+    if (brake_timeout_ms != 0 && millis()-brake_timeout_start >= brake_timeout_ms) {
+    	pos_control->set_accel_xy(wp_nav->get_wp_acceleration());
+        if (!set_mode(LOITER, MODE_REASON_MISSION_END)) {
+            set_mode(ALT_HOLD, MODE_REASON_MISSION_END);
+        }
+    	// auto_loiter_start();
+    }
+#endif
 }
 
 // auto_spline_start - initialises waypoint controller to implement flying to a particular destination using the spline controller

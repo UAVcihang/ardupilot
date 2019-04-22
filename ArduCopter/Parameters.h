@@ -188,6 +188,8 @@ public:
 
         // 97: RSSI
         k_param_rssi = 97,
+
+        k_param_radio_mode = 98,
                 
         //
         // 100: Inertial Nav
@@ -496,6 +498,7 @@ public:
     AP_Int32                Zigzag_time;
     AP_Int8                 Zigzag_width;
     AP_Int8                 radio_type;
+    AP_Int8                 radio_mode;
 
     // Note: keep initializers here in the same order as they are declared
     // above.
