@@ -523,6 +523,8 @@ enum DevOptions {
 #define FS_BATT_DISABLED                    0       // battery failsafe disabled
 #define FS_BATT_LAND                        1       // switch to LAND mode on battery failsafe
 #define FS_BATT_RTL                         2       // switch to RTL mode on battery failsafe
+#define FS_BATT_LOITER                      3       // switch to loiter mode on battery failsafe
+#define FS_BATT_NO_ACTION                   4       // no action on battery failsafe
 
 // GCS failsafe definitions (FS_GCS_ENABLE parameter)
 #define FS_GCS_DISABLED                     0

@@ -259,6 +259,7 @@ void AC_AttitudeControl::input_euler_angle_roll_pitch_euler_rate_yaw(float euler
     float euler_pitch_angle = radians(euler_pitch_angle_cd*0.01f);
     float euler_yaw_rate = radians(euler_yaw_rate_cds*0.01f);
 
+    set_yaw_sp_rate(euler_yaw_rate);
     // calculate the attitude target euler angles
     _attitude_target_quat.to_euler(_attitude_target_euler_angle.x, _attitude_target_euler_angle.y, _attitude_target_euler_angle.z);
 
@@ -556,6 +557,7 @@ void AC_AttitudeControl::attitude_nonlinear_controller_run_quat()
     _rate_target_ang_vel = update_ang_vel_target_from_att_error(attitude_error_vector);
     _attitude_error = Vector3f(attitude_error_vector.x, attitude_error_vector.y, attitude_error_vector.z);
 
+#if 1
     // 不懂？网上的说明：
     /*
      * The only time these lines have effect is when there is yaw/pitch angle error AND the aircraft is rotating around the z-axis (yaw).
@@ -590,6 +592,13 @@ void AC_AttitudeControl::attitude_nonlinear_controller_run_quat()
         _rate_target_ang_vel.y += desired_ang_vel_quat.q3;
         _rate_target_ang_vel.z += desired_ang_vel_quat.q4;
     }
+#else
+    Vector3f yaw_feedforward_rate = attitude_vehicle_quat.inverse().dcm_z();
+    yaw_feedforward_rate *= get_yaw_sp_rate() * 0.5;
+    _rate_target_ang_vel += yaw_feedforward_rate;
+
+    ang_vel_limit(_rate_target_ang_vel, radians(_ang_vel_roll_max), radians(_ang_vel_pitch_max), radians(_ang_vel_yaw_max));
+#endif
 
     if (_rate_bf_ff_enabled) {
         // rotate target and normalize
@@ -708,6 +717,7 @@ void AC_AttitudeControl::nonlinear_control_quat(Quaternion& att_to_quat, const Q
     Quaternion qd_red(att_from_thrust_vec, att_to_thrust_vec);
     //qd_red.from_axis_angle(thrust_vec_cross, thrust_vec_dot);
 
+    thrust_vec_dot = 2.0f * acosf(qd_red.q1);
     if(fabsf(qd_red.q2) > (1.f - 1e-5f) || fabsf(qd_red.q3) > (1.f - 1e-5f)){
     	qd_red = att_to_quat;
     }

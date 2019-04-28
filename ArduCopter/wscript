@@ -37,7 +37,7 @@ def build(bld):
 			'AC_ADRC',
 			'AC_INDI',
 #			'ADAP_Control',
-#			'AC_Flowermeter',
+			'AC_Flowermeter',
 			'AC_UKF'
         ],
     )

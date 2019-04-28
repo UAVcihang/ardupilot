@@ -540,7 +540,7 @@ void Copter::one_hz_loop()
     //hal.console->printf("Flowermeter pwm total %llu vel %11u pwm_pos %.2f\n",  flowermeter.get_pwmCount(), flowermeter.get_cur_flowerVel(), sprayer.get_pwm_pos());
 
 
-
+    //hal.console->printf("angle error:%.2f, g_force:%.2f\n", attitude_control->get_att_error_angle_deg(), land_accel_ef_filter.get().length());
     //char buf[256];
     //sprintf(buf, "period %llu, count %llu, velocity %llu\n", flowermeter.get_period(), flowermeter.get_pwmCount(), flowermeter.get_flowerVel());
     //GCS_MAVLINK::send_statustext_all(MAV_SEVERITY_WARNING, buf);

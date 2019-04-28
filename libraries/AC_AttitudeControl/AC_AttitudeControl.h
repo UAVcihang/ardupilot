@@ -345,6 +345,15 @@ protected:
     // Return the yaw slew rate limit in radians/s
     float get_slew_yaw_rads() { return radians(_slew_yaw*0.01f); }
 
+    void set_yaw_sp_rate(float yaw_rate)
+    {
+    	_yaw_sp_move_rate = yaw_rate;
+    }
+    float get_yaw_sp_rate()
+    {
+    	return _yaw_sp_move_rate;
+    }
+
     // Maximum rate the yaw target can be updated in Loiter, RTL, Auto flight modes
     AP_Float            _slew_yaw;
 
@@ -431,6 +440,9 @@ protected:
 
     // mix between throttle and hover throttle for 0 to 1 and ratio above hover throttle for >1
     float               _throttle_rpy_mix;
+
+
+    float               _yaw_sp_move_rate;
 
     // References to external libraries
     const AP_AHRS_View&  _ahrs;

@@ -439,7 +439,7 @@ void NavEKF2_core::recordYawReset()
 bool NavEKF2_core::checkGyroCalStatus(void)
 {
     // check delta angle bias variances
-    const float delAngBiasVarMax = sq(radians(0.15f * dtEkfAvg));
+    const float delAngBiasVarMax = sq(radians(/*0.15f*/1.0f * dtEkfAvg)); // 6.85 * e-10 0.15太小，导致耗时很长才能满足条件， 也是导致loiter模式下要等待长时间才能解锁的原因；我把它改成1.0
     delAngBiasLearned =  (P[9][9] <= delAngBiasVarMax) &&
                             (P[10][10] <= delAngBiasVarMax) &&
                             (P[11][11] <= delAngBiasVarMax);

@@ -80,7 +80,7 @@ public:
         } else {
             /* Half-Way Quaternion Solution */
             //q(0) = src.dot(dst) + sqrt(src.norm_squared() * dst.norm_squared());
-        	q.q1 = src * dst + sqrtf(src * src + dst * dst);
+        	q.q1 = src * dst + sqrtf((src * src) * (dst * dst));
         }
         q.q2 = cr.x;
         q.q3 = cr.y;
@@ -97,6 +97,26 @@ public:
         q4 = _q4;
     }
 
+    /**
+     * Corresponding body z-axis to an attitude quaternion /
+     * last orthogonal unit basis vector
+     *
+     * == last column of the equivalent rotation matrix
+     * but calculated more efficiently than a full conversion
+     */
+    Vector3f dcm_z() const
+    {
+        const Quaternion &q = *this;
+        Vector3f R_z;
+        const float a = q.q1;
+        const float b = q.q2;
+        const float c = q.q3;
+        const float d = q.q4;
+        R_z.x = 2 * (a * c + b * d);
+        R_z.y = 2 * (c * d - a * b);
+        R_z.z = a * a - b * b - c * c + d * d;
+        return R_z;
+    }
     // check if any elements are NAN
     bool        is_nan(void) const
     {

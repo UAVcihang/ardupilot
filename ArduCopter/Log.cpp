@@ -950,8 +950,10 @@ void Copter::log_init(void)
 {
     DataFlash.Init(log_structure, ARRAY_SIZE(log_structure));
     if (!DataFlash.CardInserted()) {
+    	//hal.console->printf("No dataflash card inserted");
         gcs_send_text(MAV_SEVERITY_WARNING, "No dataflash card inserted");
     } else if (DataFlash.NeedPrep()) {
+    	//hal.console->printf("Preparing log system");
         gcs_send_text(MAV_SEVERITY_INFO, "Preparing log system");
         DataFlash.Prep();
         gcs_send_text(MAV_SEVERITY_INFO, "Prepared log system");
